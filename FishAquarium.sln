@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30517.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishAquarium", "FishAquarium\FishAquarium.csproj", "{42B3C4CE-A352-4F0D-8FFF-B63E8D3341DA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42B3C4CE-A352-4F0D-8FFF-B63E8D3341DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42B3C4CE-A352-4F0D-8FFF-B63E8D3341DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42B3C4CE-A352-4F0D-8FFF-B63E8D3341DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42B3C4CE-A352-4F0D-8FFF-B63E8D3341DA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6FF35CF-1EBD-4221-8665-2015A426D1AF}
+	EndGlobalSection
+EndGlobal
