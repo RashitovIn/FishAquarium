@@ -6,6 +6,7 @@ using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,15 +16,16 @@ namespace FishAquarium
     {
         private int currentGen = 0;
         private Graphics graphics;
-        private World world;
         private int resolution;
-        private bool[,] field;
+        private int[] ratio = new int[2];
         private int rows;
         private int cols;
 
         private Fish[,] fishArr;
         private Fish[,] newFishArr;
         public int fishCount;
+        public int fishPredCount;
+        public int fishHerbCount;
 
         public Form1()
         {
@@ -47,39 +49,47 @@ namespace FishAquarium
             nudTimer.Enabled = false;
             nudResolution.Enabled = false;
             nudDensity.Enabled = false;
+            ratioTB.Enabled = false;
 
             resolution = (int)nudResolution.Value;
             rows = fieldPB.Height / resolution;
             cols = fieldPB.Width / resolution;
 
-            field = new bool[cols, rows];
             fishArr = new Fish[cols, rows];
 
             bool state;
             fishCount = 0;
+            fishPredCount = 0;
+            fishHerbCount = 0;
+            string text = ratioTB.Text;
+            string[] ratioStr = text.Split(new char[] { '/' });
+
+            int i = 0;
+            foreach (string s in ratioStr)
+            {
+                ratio[i] = Convert.ToInt32(s);
+                i++;
+            }
 
             Random random = new Random();
-            for (int x = 0; x < cols; x++)
+            for (int y = 0; y < rows; y++)
             {
-                for (int y = 0; y < rows; y++)
+                for (int x = 0; x < cols; x++)
                 {
-                    /*fishCount++;
-                    Fish fish = new Fish(fishCount, 0, 0, Brushes.Red);
-                    fish.Target[0] = 0;
-                    fish.Target[1] = 2;
-                    fishArr[0, 0] = fish;
-                    fishCount++;
-                    Fish fishh = new Fish(fishCount, 0, 4, Brushes.Green);
-                    fishh.Target[0] = 0;
-                    fishh.Target[1] = 2;
-                    fishArr[0, 4] = fishh;*/
                     state = random.Next(100 - (int)nudDensity.Value) == 0;
-                    field[x, y] = state;
 
-                    if (state)
+                    if (y <= rows / 2 && state && fishPredCount < ratio[0])
                     {
-                        Fish fish = new Fish(fishCount, x, y, Brushes.Green);
+                        PredFish fish = new PredFish(fishCount, x, y, Brushes.Red);
                         fishCount++;
+                        fishPredCount++;
+                        fishArr[x, y] = fish;
+                    }
+                    else if (y > rows / 2 && state && fishHerbCount < ratio[1])
+                    {
+                        HerbFish fish = new HerbFish(fishCount, x, y, Brushes.Green);
+                        fishCount++;
+                        fishHerbCount++;
                         fishArr[x, y] = fish;
                     }
                 }
@@ -94,99 +104,52 @@ namespace FishAquarium
         private void Upgrade()
         {
             graphics.Clear(Color.FromArgb(0, Color.White));
-
             newFishArr = new Fish[cols, rows];
+            World world = new World(cols, rows);
 
+            Pen pen = new Pen(Color.FromArgb(50, 45, 45, 48), 1);
+            for (int y = 0; y < rows; ++y)
+            {
+                graphics.DrawLine(pen, 0, y * resolution, cols * resolution, y * resolution);
+            }
+
+            for (int x = 0; x < cols; ++x)
+            {
+                graphics.DrawLine(pen, x * resolution, 0, x * resolution, rows * resolution);
+            }
 
             for (int x = 0; x < cols; x++)
             {
                 for (int y = 0; y < rows; y++)
                 {
-                    //var neighboursCount = CountNeighbours(x, y);
-
                     if (fishArr[x, y] != null && fishArr[x, y].State)
                     {
-
-                        /*if (!hasLife && neighboursCount == 3)
-                            newField[x, y] = true;
-                        else if (hasLife && (neighboursCount < 2 || neighboursCount > 3))
-                            newField[x, y] = false;
-                        else
-                            newField[x, y] = field[x, y];*/
-
-                        if (fishArr[x, y].Target[0] == fishArr[x, y].PosX && fishArr[x, y].Target[1] == fishArr[x, y].PosY)
-                            GetTarget(fishArr[x, y]);
-
-                        FishMove(fishArr[x, y]);
-                        newFishArr[fishArr[x, y].PosX, fishArr[x, y].PosY] = fishArr[x, y];
-
-                        //listBox1.Items.Add(Convert.ToString(fishArr[x, y].Id) + " " + x + " " + y + " " + fishArr[x, y].Target[0] + " " + fishArr[x, y].Target[1]);
-
+                        world.FishUpdate(fishArr, ref newFishArr, x, y);
                         graphics.FillRectangle(fishArr[x, y].Color, fishArr[x, y].PosX * resolution, fishArr[x, y].PosY * resolution, resolution, resolution);
                     }
                 }
             }
+
+            /*Pen greenPen = new Pen(Color.Gray, 5);
+
+            PointF[] curvePoints = new PointF[7];
+            float[] Y = { 15, 15, 0.5F, 0.5F, 0.5F, 15, 15 };
+            for (int i = 0; i < 7; i++)
+            {
+                PointF point = new PointF(i * cols * resolution / 6, (rows - Y[i]) * resolution );
+                listBox1.Items.Add(Convert.ToString(i * cols * resolution / 6 + " " + (rows - Y[i]) * resolution));
+                curvePoints[i] = point;
+            }
+
+            graphics.DrawCurve(greenPen, curvePoints, 0.2F);*/
+
             fishArr = newFishArr;
             fieldPB.Refresh();
             genLb.Text = Convert.ToString(++currentGen);
             countLb.Text = Convert.ToString(fishCount);
         }
 
-        private void FishMove(Fish fish)
-        {
-            if (fish.Target[0] > fish.PosX)
-            {
-                if (CheckMove(fish.PosX + 1, fish.PosY))
-                    fish.PosX = fish.PosX + 1;
-            }
-            else if (fish.Target[0] < fish.PosX)
-            {
-                if (CheckMove(fish.PosX - 1, fish.PosY))
-                    fish.PosX = fish.PosX - 1;
-            }                
-
-            if (fish.Target[1] > fish.PosY)
-            {
-                if (CheckMove(fish.PosX, fish.PosY + 1))
-                    fish.PosY = fish.PosY + 1;
-            }
-            else if (fish.Target[1] < fish.PosY)
-            {
-                if (CheckMove(fish.PosX, fish.PosY - 1))
-                    fish.PosY = fish.PosY - 1;
-            }
-        }
-
-        private bool CheckMove(int NextPosX, int NextPosY)
-        {
-            if (NextPosY < rows && NextPosY >= 0)
-            {
-                NextPosX = (NextPosX + cols) % cols;
-                if (fishArr[NextPosX, NextPosY] == null && newFishArr[NextPosX, NextPosY] == null)
-                {
-                    //listBox1.Items.Add("lol");
-                    return true;
-                }
-            }
-            //listBox1.Items.Add("Stolk");
-            return false;
-        }
-
-        private void GetTarget(Fish fish)
-        {
-            Random random = new Random();
-            int stepX = random.Next(10);
-            int stepY = random.Next(20);
-            int sideX = random.Next(-1, 2);
-            int sideY = random.Next(-1, 2);
-            int[] target = new int[2];
-
-            target[0] = (fish.PosX + sideX * stepX + cols) % cols;
-            target[1] = (fish.PosY + sideY * stepY + rows) % rows;
-            fish.Target = target;
-        }
-
-        private int CountNeighbours(int x, int y)
+       /* private int CountNeighbours(int x, int y)
         {
             int count = 0;
 
@@ -206,7 +169,7 @@ namespace FishAquarium
             }
 
             return count;
-        }
+        }*/
 
         private void StopWorld()
         {
@@ -217,6 +180,7 @@ namespace FishAquarium
             nudResolution.Enabled = true;
             nudDensity.Enabled = true;
             nudTimer.Enabled = true;
+            ratioTB.Enabled = true;
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -261,8 +225,7 @@ namespace FishAquarium
                 if (validationPassed && fishArr[x, y] != null)
                 {
                     fishArr[x, y].State = false;
-                    //fishCount--;
-                    //fishArr[x, y] = fish;
+                    fishCount--;
                 }
             }
         }
@@ -270,11 +233,6 @@ namespace FishAquarium
         private bool ValidateMousePosition(int x, int y)
         {
             return x >= 0 && y >= 0 && x < cols && y < rows;
-        }
-
-        private void nudDensity_ValueChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

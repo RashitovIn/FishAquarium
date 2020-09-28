@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Drawing;
 using System.Threading.Tasks;
 
 namespace FishAquarium
@@ -12,6 +13,12 @@ namespace FishAquarium
         private int cols;
         private int rows;
         private Fish[,] localFishArr;
+        private Fish[,] localNewFishArr;
+
+        public World()
+        {
+
+        }
 
         public World(int cols, int rows)
         {
@@ -19,38 +26,40 @@ namespace FishAquarium
             this.rows = rows;
         }
 
-        public void FishUpdate(ref Fish[,] fishArr, int x, int y)
+        public void FishUpdate(Fish[,] fishArr, ref Fish[,] newFishArr, int x, int y)
         {
-            Fish [,] newFishArr = fishArr;
             localFishArr = fishArr;
+            localNewFishArr = newFishArr;
 
-                    if (newFishArr[x, y] != null && newFishArr[x, y].State)
-                    {
-                        if (newFishArr[x, y].Target[0] == newFishArr[x, y].PosX && newFishArr[x, y].Target[1] == newFishArr[x, y].PosY)
-                            GetTarget(newFishArr[x, y]);
+            if (fishArr[x, y].Target[0] == fishArr[x, y].PosX && fishArr[x, y].Target[1] == fishArr[x, y].PosY)
+                GetTarget(fishArr[x, y]);
 
-                        FishMove(newFishArr[x, y]);
-
-                        fishArr[newFishArr[x, y].PosX, newFishArr[x, y].PosY] = newFishArr[x, y];
-                fishArr[x, y] = null;
-                    }
-
+            FishMove(fishArr[x, y]);
+            newFishArr[fishArr[x, y].PosX, fishArr[x, y].PosY] = fishArr[x, y];
         }
 
         private void FishMove(Fish fish)
         {
-            if (fish.Target[0] > fish.PosX && CheckMove(fish.PosX + 1, fish.PosY))
-                fish.PosX = fish.PosX + 1;
-            else if (fish.Target[0] < fish.PosX && CheckMove(fish.PosX - 1, fish.PosY))
-                fish.PosX = fish.PosX - 1;
-
-            if (fish.Target[1] > fish.PosY && CheckMove(fish.PosX, fish.PosY + 1))
+            if (fish.Target[0] > fish.PosX)
             {
-                fish.PosY = fish.PosY + 1;
+                if (CheckMove(fish.PosX + 1, fish.PosY))
+                    fish.PosX = fish.PosX + 1;
             }
-            else if (fish.Target[1] < fish.PosY && CheckMove(fish.PosX, fish.PosY - 1))
+            else if (fish.Target[0] < fish.PosX)
             {
-                fish.PosY = fish.PosY - 1;
+                if (CheckMove(fish.PosX - 1, fish.PosY))
+                    fish.PosX = fish.PosX - 1;
+            }
+
+            if (fish.Target[1] > fish.PosY)
+            {
+                if (CheckMove(fish.PosX, fish.PosY + 1))
+                    fish.PosY = fish.PosY + 1;
+            }
+            else if (fish.Target[1] < fish.PosY)
+            {
+                if (CheckMove(fish.PosX, fish.PosY - 1))
+                    fish.PosY = fish.PosY - 1;
             }
         }
 
@@ -59,13 +68,11 @@ namespace FishAquarium
             if (NextPosY < rows && NextPosY >= 0)
             {
                 NextPosX = (NextPosX + cols) % cols;
-                if (localFishArr[NextPosX, NextPosY] == null)
+                if (localFishArr[NextPosX, NextPosY] == null && localNewFishArr[NextPosX, NextPosY] == null)
                 {
-                    //listBox1.Items.Add("lol");
                     return true;
                 }
             }
-            //listBox1.Items.Add("Stolk");
             return false;
         }
 

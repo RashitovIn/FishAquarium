@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FishAquarium
 {
-    class Fish
+    class Fish : World
     {
         public Brush Color { get; set; }
         public bool State { get; set; } //жива или мертва
@@ -16,6 +16,8 @@ namespace FishAquarium
         public int PosY { get; set; }
         public int[] Target { get; set; } 
         public int SignOfGoal { get; set; }
+        public int Energy { get; set; }
+        public int Speed { get; set; }
        
         public Fish(int id, int posX, int posY, Brush color)
         {
@@ -27,34 +29,34 @@ namespace FishAquarium
             Target = new int[2];
             Target[0] = PosX;
             Target[1] = PosY;
+            Energy = 1;
         }
+    }
 
-        public Fish()
+    class PredFish : Fish
+    {
+        private string type = "Pred";
+        public string Type { get; }
+
+        public PredFish(int id, int posX, int posY, Brush color) :base(id, posX, posY, color)
         {
 
         }
+    }
 
-        public void getRandomPos(Fish fish)
+    class HerbFish : Fish
+    {
+        private string type = "Herb";
+        public string Type { get; }
+
+        public HerbFish(int id, int posX, int posY, Brush color) : base(id, posX, posY, color)
         {
-            Random rand = new Random();
-            int step = rand.Next(1, 5);
 
-            if (step == 1)
-            {//Вверх
-                fish.PosY = -1;
-            }
-            else if (step == 2)
-            {//направо
-                fish.PosX = +1;
-            }
-            else if (step == 3)
-            {//вниз
-                fish.PosY = +1;
-            }
-            else if (step == 4)
-            {//налево
-                fish.PosX = -1;
-            }
         }
+    }
+
+    class Worm : World
+    {
+        
     }
 }
