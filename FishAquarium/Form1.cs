@@ -21,8 +21,8 @@ namespace FishAquarium
         private int rows;
         private int cols;
 
-        private Fish[,] fishArr;
-        private Fish[,] newFishArr;
+        private World[,] fishArr;
+        private World[,] newFishArr;
         public int fishCount;
         public int fishPredCount;
         public int fishHerbCount;
@@ -55,7 +55,7 @@ namespace FishAquarium
             rows = fieldPB.Height / resolution;
             cols = fieldPB.Width / resolution;
 
-            fishArr = new Fish[cols, rows];
+            fishArr = new World[cols, rows];
 
             bool state;
             fishCount = 0;
@@ -80,14 +80,14 @@ namespace FishAquarium
 
                     if (y <= rows / 2 && state && fishPredCount < ratio[0])
                     {
-                        PredFish fish = new PredFish(fishCount, x, y, Brushes.Red);
+                        PredFish fish = new PredFish(x, y, Brushes.Red);
                         fishCount++;
                         fishPredCount++;
                         fishArr[x, y] = fish;
                     }
                     else if (y > rows / 2 && state && fishHerbCount < ratio[1])
                     {
-                        HerbFish fish = new HerbFish(fishCount, x, y, Brushes.Green);
+                        HerbFish fish = new HerbFish(x, y, Brushes.Green);
                         fishCount++;
                         fishHerbCount++;
                         fishArr[x, y] = fish;
@@ -98,13 +98,15 @@ namespace FishAquarium
             fieldPB.Image = new Bitmap(fieldPB.Width, fieldPB.Height);
             graphics = Graphics.FromImage(fieldPB.Image);
             countLb.Text = Convert.ToString(fishCount);
+            predCountLb.Text = Convert.ToString(fishPredCount);
+            herbCountLb.Text = Convert.ToString(fishHerbCount);
             timer.Start();
         }
 
         private void Upgrade()
         {
             graphics.Clear(Color.FromArgb(0, Color.White));
-            newFishArr = new Fish[cols, rows];
+            newFishArr = new World[cols, rows];
             World world = new World(cols, rows);
 
             Pen pen = new Pen(Color.FromArgb(50, 45, 45, 48), 1);
@@ -124,7 +126,7 @@ namespace FishAquarium
                 {
                     if (fishArr[x, y] != null && fishArr[x, y].State)
                     {
-                        world.FishUpdate(fishArr, ref newFishArr, x, y);
+                        world.FishUpdate(fishArr, ref newFishArr, x, y, ref listBox1);
                         graphics.FillRectangle(fishArr[x, y].Color, fishArr[x, y].PosX * resolution, fishArr[x, y].PosY * resolution, resolution, resolution);
                     }
                 }
@@ -148,28 +150,6 @@ namespace FishAquarium
             genLb.Text = Convert.ToString(++currentGen);
             countLb.Text = Convert.ToString(fishCount);
         }
-
-       /* private int CountNeighbours(int x, int y)
-        {
-            int count = 0;
-
-            for (int i = -1; i < 2; i++)
-            {
-                for (int j = -1; j < 2; j++)
-                {
-                    var col = (x + i + cols) % cols;
-                    var row = (y + j + rows) % rows;
-
-                    var isSelfChecking = col == x && row == y;
-                    var hasLife = field[col, row];
-
-                    if (hasLife && !isSelfChecking)
-                        count++;
-                }
-            }
-
-            return count;
-        }*/
 
         private void StopWorld()
         {
@@ -210,9 +190,8 @@ namespace FishAquarium
                 var validationPassed = ValidateMousePosition(x, y);
                 if (validationPassed && fishArr[x, y] == null)
                 {
-                    Fish fish = new Fish(fishCount, x, y, Brushes.Green);
-                    fishCount++;
-                    fishArr[x, y] = fish;
+                    Worm worm = new Worm(x, y, Brushes.Yellow);
+                    fishArr[x, y] = worm;
                 }
                     
             }
@@ -224,8 +203,7 @@ namespace FishAquarium
                 var validationPassed = ValidateMousePosition(x, y);
                 if (validationPassed && fishArr[x, y] != null)
                 {
-                    fishArr[x, y].State = false;
-                    fishCount--;
+                    fishArr[x, y] = null;
                 }
             }
         }
