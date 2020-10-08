@@ -71,6 +71,25 @@ namespace FishAquarium
                 i++;
             }
 
+            /*HerbFish fish = new HerbFish(0, 3, Brushes.Green);
+            fishCount++;
+            fishPredCount++;
+            fishArr[0, 3] = fish;*/
+            /*PredFish fish1 = new PredFish(50, 50, Brushes.Red);
+            fishCount++;
+            fishPredCount++;
+            fishArr[0, 4] = fish1;*/
+
+
+            /*Worm worm = new Worm(0, 2, Brushes.Yellow);
+            fishArr[0, 2] = worm;
+            Worm worm1 = new Worm(0, 2, Brushes.Yellow);
+            fishArr[1, 3] = worm1;
+            Worm worm2 = new Worm(0, 2, Brushes.Yellow);
+            fishArr[1, 2] = worm2;
+            Worm worm3 = new Worm(0, 2, Brushes.Yellow);
+            fishArr[1, 4] = worm3;*/
+
             Random random = new Random();
             for (int y = 0; y < rows; y++)
             {
@@ -171,6 +190,7 @@ namespace FishAquarium
         private void StartBtn_Click(object sender, EventArgs e)
         {
             StartWorld();
+            listBox1.Items.Clear();
         }
 
         private void StopBtn_Click(object sender, EventArgs e)
