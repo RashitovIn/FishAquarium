@@ -8,7 +8,7 @@ using System.Xml;
 
 namespace FishAquarium
 {
-    class Fish : World
+    abstract class Fish : World
     {
         public int SignOfGoal { get; set; }
         public int Energy { get; set; }

@@ -22,7 +22,6 @@ namespace FishAquarium
         private int cols;
 
         private World[,] fishArr;
-        private World[,] newFishArr;
         public int fishCount;
         public int fishPredCount;
         public int fishHerbCount;
@@ -125,8 +124,18 @@ namespace FishAquarium
         private void Upgrade()
         {
             graphics.Clear(Color.FromArgb(0, Color.White));
-            newFishArr = new World[cols, rows];
             World world = new World(cols, rows);
+
+            for (int x = 0; x < cols; x++)
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    if (fishArr[x, y] != null && fishArr[x, y].State)
+                    {
+                        world.FishUpdate(ref fishArr, x, y, ref listBox1);
+                    }
+                }
+            }
 
             Pen pen = new Pen(Color.FromArgb(50, 45, 45, 48), 1);
             for (int y = 0; y < rows; ++y)
@@ -143,9 +152,9 @@ namespace FishAquarium
             {
                 for (int y = 0; y < rows; y++)
                 {
-                    if (fishArr[x, y] != null && fishArr[x, y].State)
+                    if (fishArr[x, y] != null)
                     {
-                        world.FishUpdate(fishArr, ref newFishArr, x, y, ref listBox1);
+                        fishArr[x, y].Checked = false;
                         graphics.FillRectangle(fishArr[x, y].Color, fishArr[x, y].PosX * resolution, fishArr[x, y].PosY * resolution, resolution, resolution);
                     }
                 }
@@ -164,7 +173,6 @@ namespace FishAquarium
 
             graphics.DrawCurve(greenPen, curvePoints, 0.2F);*/
 
-            fishArr = newFishArr;
             fieldPB.Refresh();
             genLb.Text = Convert.ToString(++currentGen);
             countLb.Text = Convert.ToString(fishCount);

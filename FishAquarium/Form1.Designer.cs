@@ -302,7 +302,7 @@
             // 
             this.nudResolution.Location = new System.Drawing.Point(10, 25);
             this.nudResolution.Maximum = new decimal(new int[] {
-            25,
+            40,
             0,
             0,
             0});
