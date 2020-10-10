@@ -41,15 +41,24 @@ namespace FishAquarium
 
             string[,] field;
 
-            if (fishArr[x, y].Type == "Worm")
+            if (fishArr[x, y].Type == "Worm" && !fishArr[x, y].Checked)
+            {
+                if (CheckMove(x, y + 1, fishArr[x, y]))
+                {
+                    fishArr[x, y].Checked = true;
+                    fishArr[x, y].PosY = fishArr[x, y].PosY + 1;
+                    fishArr[x, y + 1] = fishArr[x, y];
+                    fishArr[x, y] = null;
+                }
                 return;
+            }    
 
             if (!fishArr[x, y].Checked)
             {
                 fishArr[x, y].Checked = true;
 
                 field = FishRadar(fishArr[x, y]);
-                if (fishArr[x, y].Target[0] == fishArr[x, y].PosX && fishArr[x, y].Target[1] == fishArr[x, y].PosY)
+                //if (fishArr[x, y].Target[0] == fishArr[x, y].PosX && fishArr[x, y].Target[1] == fishArr[x, y].PosY)
                     GetDefTarget(fishArr[x, y], field, lb);
                 //GetTarget(fishArr[x, y]);
 
@@ -137,6 +146,11 @@ namespace FishAquarium
                 lb.Items.Add(Convert.ToString(maxInd[0] + " " + maxInd[1]));
                 lb.Items.Add("---------------");
                 //
+
+                if (oddsField[maxInd[0], maxInd[1]] == 0)
+                {
+                    return;
+                }
                 stepX = maxInd[0] - n / 2;
                 stepY = maxInd[1] - n / 2;
 
@@ -144,8 +158,8 @@ namespace FishAquarium
                 target[1] = fish.PosY + stepY;
                 fish.Target = target;
             }
-            else
-                GetTarget(fish);
+            //else
+                //GetTarget(fish);
         }
 
         private int[] MaxIndex(double[,] mat)
@@ -186,7 +200,7 @@ namespace FishAquarium
 
         private string[,] FishRadar(World fish)
         {
-            int sens = 4;
+            int sens = 3;
             int x = fish.PosX;
             int y = fish.PosY;
             int xi;
