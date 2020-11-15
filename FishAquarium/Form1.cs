@@ -21,10 +21,13 @@ namespace FishAquarium
         private int rows;
         private int cols;
 
-        private World[,] fishArr;
+        private Entity[,] worldArr;
         public int fishCount;
         public int fishPredCount;
         public int fishHerbCount;
+
+        Font drawFont = new Font("Arial", 7);
+        SolidBrush drawBrush = new SolidBrush(Color.White);
 
         public Form1()
         {
@@ -49,13 +52,13 @@ namespace FishAquarium
             nudResolution.Enabled = false;
             nudDensity.Enabled = false;
             ratioTB.Enabled = false;
+            contBtn.Enabled = false;
 
             resolution = (int)nudResolution.Value;
             rows = fieldPB.Height / resolution;
             cols = fieldPB.Width / resolution;
 
-            fishArr = new World[cols, rows];
-
+            worldArr = new Entity[cols, rows];
             bool state;
             fishCount = 0;
             fishPredCount = 0;
@@ -70,10 +73,10 @@ namespace FishAquarium
                 i++;
             }
 
-            /*HerbFish fish = new HerbFish(0, 3, Brushes.Green);
+            /*HerbFish fish = new HerbFish(5, 5);
             fishCount++;
             fishPredCount++;
-            fishArr[0, 3] = fish;*/
+            fishArr[5, 5] = fish;*/
             /*PredFish fish1 = new PredFish(50, 50, Brushes.Red);
             fishCount++;
             fishPredCount++;
@@ -98,17 +101,17 @@ namespace FishAquarium
 
                     if (y <= rows / 2 && state && fishPredCount < ratio[0])
                     {
-                        PredFish fish = new PredFish(x, y, Brushes.Red);
+                        PredFish fish = new PredFish(x, y);
                         fishCount++;
                         fishPredCount++;
-                        fishArr[x, y] = fish;
+                        worldArr[x, y] = fish;
                     }
                     else if (y > rows / 2 && state && fishHerbCount < ratio[1])
                     {
-                        HerbFish fish = new HerbFish(x, y, Brushes.Green);
+                        HerbFish fish = new HerbFish(x, y);
                         fishCount++;
                         fishHerbCount++;
-                        fishArr[x, y] = fish;
+                        worldArr[x, y] = fish;
                     }
                 }
             }
@@ -130,9 +133,24 @@ namespace FishAquarium
             {
                 for (int y = 0; y < rows; y++)
                 {
-                    if (fishArr[x, y] != null && fishArr[x, y].State)
+                    if (worldArr[x, y] != null && worldArr[x, y].State)
                     {
-                        world.FishUpdate(ref fishArr, x, y, ref listBox1);
+                        world.UpdateWorld(ref worldArr, x, y, ref listBox1);
+                    }
+                }
+            }
+
+            for (int x = 0; x < cols; x++)
+            {
+                for (int y = 0; y < rows; y++)
+                {
+                    if (worldArr[x, y] != null)
+                    {
+                        worldArr[x, y].Checked = false;
+
+                        //graphics.DrawImage(newImage, fishArr[x, y].PosX * resolution + (float)0.5, fishArr[x, y].PosY * resolution + (float)0.5, resolution - 1, resolution - 1);
+                        graphics.FillRectangle(worldArr[x, y].Color, worldArr[x, y].PosX * resolution + (float)0.5, worldArr[x, y].PosY * resolution + (float)0.5, resolution - 1, resolution - 1);
+                        graphics.DrawString(Convert.ToString(worldArr[x, y].Energy), drawFont, drawBrush, worldArr[x, y].PosX * resolution + (float)0.5, worldArr[x, y].PosY * resolution + (float)0.5);
                     }
                 }
             }
@@ -146,18 +164,6 @@ namespace FishAquarium
             for (int x = 0; x < cols; ++x)
             {
                 graphics.DrawLine(pen, x * resolution, 0, x * resolution, rows * resolution);
-            }
-
-            for (int x = 0; x < cols; x++)
-            {
-                for (int y = 0; y < rows; y++)
-                {
-                    if (fishArr[x, y] != null)
-                    {
-                        fishArr[x, y].Checked = false;
-                        graphics.FillRectangle(fishArr[x, y].Color, fishArr[x, y].PosX * resolution, fishArr[x, y].PosY * resolution, resolution, resolution);
-                    }
-                }
             }
 
             /*Pen greenPen = new Pen(Color.Gray, 5);
@@ -188,11 +194,23 @@ namespace FishAquarium
             nudDensity.Enabled = true;
             nudTimer.Enabled = true;
             ratioTB.Enabled = true;
+            contBtn.Enabled = true;
+        }
+
+        private void contBtn_Click(object sender, EventArgs e)
+        {
+            timer.Start();
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
             Upgrade();
+        }
+
+        private void TimerTrackBar_Scroll(object sender, EventArgs e)
+        {
+            nudTimer.Value = TimerTrackBar.Value;
+            timer.Interval = TimerTrackBar.Value;
         }
 
         private void StartBtn_Click(object sender, EventArgs e)
@@ -216,10 +234,10 @@ namespace FishAquarium
                 var x = e.Location.X / resolution;
                 var y = e.Location.Y / resolution;
                 var validationPassed = ValidateMousePosition(x, y);
-                if (validationPassed && fishArr[x, y] == null)
+                if (validationPassed && worldArr[x, y] == null)
                 {
-                    Worm worm = new Worm(x, y, Brushes.Yellow);
-                    fishArr[x, y] = worm;
+                    Worm worm = new Worm(x, y);
+                    worldArr[x, y] = worm;
                 }
                     
             }
@@ -229,9 +247,9 @@ namespace FishAquarium
                 var x = e.Location.X / resolution;
                 var y = e.Location.Y / resolution;
                 var validationPassed = ValidateMousePosition(x, y);
-                if (validationPassed && fishArr[x, y] != null)
+                if (validationPassed && worldArr[x, y] != null)
                 {
-                    fishArr[x, y] = null;
+                    worldArr[x, y] = null;
                 }
             }
         }

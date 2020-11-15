@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace FishAquarium
@@ -9,77 +7,103 @@ namespace FishAquarium
     {
         private int cols;
         private int rows;
-        private World[,] localFishArr;
+        private Entity[,] localWorldArr;
         private bool xMove;
         private bool yMove;
+        private Random random;
 
-        public Brush Color { get; set; }
-        public bool State { get; set; } //жива или мертва
-        public int PosX { get; set; }
-        public int PosY { get; set; }
-        public int[] Target { get; set; }
-        public int GiveEnergy { get; set; }
-        public string Type { get; set; }
         public bool Checked { get; set; } = false; //Для цикла, если true значит уже сделал ход
+
+        public delegate void MethodContainer();
+        public event MethodContainer onCount;
 
         public World()
         {
-
+            random = new Random();
         }
 
         public World(int cols, int rows)
         {
             this.cols = cols;
             this.rows = rows;
+            random = new Random();
         }
 
-        public void FishUpdate(ref World[,] fishArr, int x, int y, ref ListBox lb)
+        public void FishCheckEvents(Entity fish)
         {
-            localFishArr = fishArr;
-            xMove = false;
-            yMove = false;
-
-            string[,] field;
-
-            if (fishArr[x, y].Type == "Worm" && !fishArr[x, y].Checked)
+            if (fish.Energy == 0)
             {
-                if (CheckMove(x, y + 1, fishArr[x, y]))
-                {
-                    fishArr[x, y].Checked = true;
-                    fishArr[x, y].PosY = fishArr[x, y].PosY + 1;
-                    fishArr[x, y + 1] = fishArr[x, y];
-                    fishArr[x, y] = null;
-                }
-                return;
-            }    
 
-            if (!fishArr[x, y].Checked)
-            {
-                fishArr[x, y].Checked = true;
-
-                field = FishRadar(fishArr[x, y]);
-                //if (fishArr[x, y].Target[0] == fishArr[x, y].PosX && fishArr[x, y].Target[1] == fishArr[x, y].PosY)
-                    GetDefTarget(fishArr[x, y], field, lb);
-                //GetTarget(fishArr[x, y]);
-
-                FishMove(fishArr[x, y]);
-                fishArr[fishArr[x, y].PosX, fishArr[x, y].PosY] = fishArr[x, y];
-
-                if (xMove || yMove)
-                    fishArr[x, y] = null;
             }
         }
 
-        private void GetDefTarget(World fish, string[,] field, ListBox lb)
+        public void UpdateWorld(ref Entity[,] worldArr, int x, int y, ref ListBox lb)
         {
-            Dictionary<string, double> weights = new Dictionary<string, double>
-            {
-                ["Pred"] = 0.1,
-                ["Worm"] = 0.9,
-                ["Herb"] = 0.3,
-            };
-            double[] layerOdds = { 1, 0.7, 0.5, 0.4, 0.3, 0.2, 0.1, 0.3, 0.4, 0.5, 0.2 }; // Коэффициенты слоёв
+            localWorldArr = worldArr;
 
+            if (!worldArr[x, y].Checked)
+            {
+                xMove = false;
+                yMove = false;
+
+                string[,] field;
+
+                if (worldArr[x, y].Type == "Worm")
+                {
+                    if (CheckMove(x, y + 1, worldArr[x, y]))
+                    {
+                        worldArr[x, y].Checked = true;
+                        worldArr[x, y].PosY = worldArr[x, y].PosY + 1;
+                        worldArr[x, y + 1] = worldArr[x, y];
+                        worldArr[x, y] = null;
+                    }
+                    return;
+                }
+                else if (worldArr[x, y].Type == "Die")
+                {
+                    if (CheckMove(x, y - 1, worldArr[x, y]))
+                    {
+                        worldArr[x, y].Checked = true;
+                        worldArr[x, y].PosY = worldArr[x, y].PosY - 1;
+                        worldArr[x, y - 1] = worldArr[x, y];
+                        worldArr[x, y] = null;
+                    }
+                    return;
+                }
+
+                worldArr[x, y].Checked = true;
+                field = FishRadar(worldArr[x, y]);
+
+                if (worldArr[x, y].TargetLimiter >= 2)
+                {
+                    worldArr[x, y].Target[0] = worldArr[x, y].PosX;
+                    worldArr[x, y].Target[1] = worldArr[x, y].PosY;
+                    worldArr[x, y].TargetLimiter = 0;
+                }
+
+                //if (fishArr[x, y].Target[0] == fishArr[x, y].PosX && fishArr[x, y].Target[1] == fishArr[x, y].PosY)
+                GetDefTarget(worldArr[x, y], field, lb);
+                //GetTarget(fishArr[x, y]);
+                FishMove(worldArr[x, y]);
+
+                worldArr[x, y].Energy -= 0.5;
+
+                if (worldArr[x, y].Energy == 0)
+                    onCount += worldArr[x, y].FishDie;
+
+                if (xMove || yMove)
+                {
+                    worldArr[worldArr[x, y].PosX, worldArr[x, y].PosY] = worldArr[x, y];
+                    worldArr[x, y] = null;
+                }
+                else
+                    worldArr[x, y].TargetLimiter++;
+            }
+            onCount?.Invoke();
+        }
+
+        private void GetDefTarget(Entity fish, string[,] field, ListBox lb)
+        {
             int n = field.GetLength(0);
             double[,] oddsField = new double[n, n];
             bool isZero = true;
@@ -89,18 +113,17 @@ namespace FishAquarium
                 for (int j = 0; j < n; j++)
                 {
                     if (field[i, j] != null)
-                    {
-                        oddsField[i, j] = weights[field[i, j]];
-                        isZero = false;
-                    }
+                        oddsField[i, j] = fish.Weights[field[i, j]];
                     else
                         oddsField[i, j] = 0;
+
+                    if (oddsField[i, j] != 0)
+                        isZero = false;
                 }
             }
 
             n--;
             int layersCount = n / 2 - 1;
-
             if (!isZero)
             {
                 int count = 0;
@@ -110,23 +133,23 @@ namespace FishAquarium
                     col = 0 + count;
                     for (int j = count; j <= n - count; j++)
                     {
-                        oddsField[col, j] = oddsField[col, j] * layerOdds[layersCount];
+                        oddsField[col, j] = oddsField[col, j] * fish.LayerOdds[layersCount];
                     }
 
                     col = n - count;
                     for (int j = count; j <= n - count; j++)
                     {
-                        oddsField[col, j] = oddsField[col, j] * layerOdds[layersCount];
+                        oddsField[col, j] = oddsField[col, j] * fish.LayerOdds[layersCount];
                     }
 
                     for (int j = count + 1; j <= n - count - 1; j++)
                     {
-                        oddsField[count, j] = oddsField[count, j] * layerOdds[layersCount];
+                        oddsField[count, j] = oddsField[count, j] * fish.LayerOdds[layersCount];
                     }
 
                     for (int j = count + 1; j <= n - count - 1; j++)
                     {
-                        oddsField[n - count, j] = oddsField[n - count, j] * layerOdds[layersCount];
+                        oddsField[n - count, j] = oddsField[n - count, j] * fish.LayerOdds[layersCount];
                     }
 
                     layersCount--;
@@ -140,7 +163,7 @@ namespace FishAquarium
                 //
                 for (int i = 0; i <= n; i++)
                 {
-                    lb.Items.Add(Convert.ToString(oddsField[i, 0] + " " + oddsField[i, 1] + " " + oddsField[i, 2]));
+                    lb.Items.Add(Convert.ToString(oddsField[i, 0] + " " + oddsField[i, 1] + " " + oddsField[i, 2] + " " + oddsField[i, 3] + " " + oddsField[i, 4]));
                 }
                 lb.Items.Add("--");
                 lb.Items.Add(Convert.ToString(maxInd[0] + " " + maxInd[1]));
@@ -158,8 +181,24 @@ namespace FishAquarium
                 target[1] = fish.PosY + stepY;
                 fish.Target = target;
             }
-            //else
-                //GetTarget(fish);
+            else
+                GetTarget(fish, random);
+        }
+
+        private void MotionVector(string[,] field, int[] maxind, string type)
+        {
+            string targetType = field[maxind[0], maxind[1]];
+            if (type == "Pred")
+            {
+
+            }
+            else if (type == "Herb")
+            {
+                if (targetType == "Pred")
+                {
+
+                }
+            }
         }
 
         private int[] MaxIndex(double[,] mat)
@@ -190,17 +229,24 @@ namespace FishAquarium
         {
             string type = null;
 
-            if (localFishArr[x, y] != null && localFishArr[x, y].PosX == x && localFishArr[x, y].PosY == y)
+            if (localWorldArr[x, y] != null)
             {
-                type = localFishArr[x, y].Type;
-            }
+                if (localWorldArr[x, y].PosX == x && localWorldArr[x, y].PosY == y)
+                {
+                    type = localWorldArr[x, y].Type;
+                }
+            }/*
+            else
+            {
+                type = "None";
+            }*/
 
             return type;
         }
 
-        private string[,] FishRadar(World fish)
+        private string[,] FishRadar(Entity fish)
         {
-            int sens = 3;
+            int sens = 5;
             int x = fish.PosX;
             int y = fish.PosY;
             int xi;
@@ -220,6 +266,7 @@ namespace FishAquarium
                         if (yj >= 0 && yj < rows)
                         {
                             if (xi != x || yj != y)
+                                //field[i + sens, j + sens] = fish[xi, yj];
                                 field[i + sens, j + sens] = CheckType(xi, yj);
                         }
                     }
@@ -229,15 +276,7 @@ namespace FishAquarium
             return field;
         }
 
-        private void GoToTarget(World fish)
-        {
-            int xWay = fish.Target[0] - fish.PosX;
-            int yWay = fish.Target[1] - fish.PosY;
-
-
-        }
-
-        private void FishMove(World fish)
+        private void FishMove(Entity fish)
         {
             if (fish.Target[0] > fish.PosX)
             {
@@ -274,23 +313,26 @@ namespace FishAquarium
             }
         }
 
-        private bool CheckMove(int NextPosX, int NextPosY, World fish)
+        private bool CheckMove(int NextPosX, int NextPosY, Entity fish)
         {
             if (NextPosY < rows && NextPosY >= 0 && NextPosX < cols && NextPosX >= 0)
             {
-                if (localFishArr[NextPosX, NextPosY] == null)
+                if (localWorldArr[NextPosX, NextPosY] == null)
                     return true;
+
                 if (fish.Type == "Pred")
                 {
-                    if (localFishArr[NextPosX, NextPosY].Type == "Worm" || localFishArr[NextPosX, NextPosY].Type == "Herb")
+                    if (localWorldArr[NextPosX, NextPosY].Type == "Worm" || localWorldArr[NextPosX, NextPosY].Type == "Herb" || localWorldArr[NextPosX, NextPosY].Type == "Die")
                     {
+                        fish.Energy += localWorldArr[NextPosX, NextPosY].GiveEnergy;
                         return true;
                     }
                 }
-                if (fish.Type == "Herb")
+                else if (fish.Type == "Herb")
                 {
-                    if (localFishArr[NextPosX, NextPosY].Type == "Worm")
+                    if (localWorldArr[NextPosX, NextPosY].Type == "Worm")
                     {
+                        fish.Energy += localWorldArr[NextPosX, NextPosY].GiveEnergy;
                         return true;
                     }
                 }
@@ -299,18 +341,20 @@ namespace FishAquarium
             return false;
         }
 
-        private void GetTarget(World fish)
+        private void GetTarget(Entity fish, Random random)
         {
-            Random random = new Random();
-            int stepX = random.Next(10);
-            int stepY = random.Next(10);
-            int sideX = random.Next(-1, 2);
-            int sideY = random.Next(-1, 2);
-            int[] target = new int[2];
+            if (fish.Target[0] == fish.PosX && fish.Target[1] == fish.PosY)
+            {
+                int stepX = random.Next(10);
+                int stepY = random.Next(10);
+                int sideX = random.Next(-1, 2);
+                int sideY = random.Next(-1, 2);
+                int[] target = new int[2];
 
-            target[0] = (fish.PosX + sideX * stepX + cols) % cols;
-            target[1] = (fish.PosY + sideY * stepY + rows) % rows;
-            fish.Target = target;
+                target[0] = (fish.PosX + sideX * stepX + cols) % cols;
+                target[1] = (fish.PosY + sideY * stepY + rows) % rows;
+                fish.Target = target;
+            }
         }
     }
 }
