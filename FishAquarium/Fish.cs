@@ -9,32 +9,39 @@ using System.Xml;
 
 namespace FishAquarium
 {
-    abstract class Entity : World
+    abstract class Entity
     {
+        public Rectangle Body;
         public Brush Color { get; set; }
         public bool State { get; set; } //жива или мертва
         public int PosX { get; set; }
         public int PosY { get; set; }
-        public int[] Target { get; set; }
-        public int TargetLimiter { get; set; }
+        public double[] Target { get; set; }
+        public double TargetLimiter { get; set; }
         public int SignOfGoal { get; set; }
         public double Energy { get; set; }
         public int Speed { get; set; }
         public double GiveEnergy { get; set; }
         public string Type { get; set; }
+        public int Dx { get; set; }
+        public int Dy { get; set; }
+
+        Random rand;
 
         public Dictionary<string, double> Weights { get; set; }
         public double[] LayerOdds { get; set; } // Коэффициенты слоёв
 
         public Entity(int posX, int posY)
         {
+            rand = new Random(posX + posY);
             PosX = posX;
             PosY = posY;
             State = true;
             //Color = color;
-            Target = new int[2];
+            Target = new double[2];
             Target[0] = PosX;
             Target[1] = PosY;
+            Body = new Rectangle(posX, posY, 20, 10);
         }
 
         public void FishDie()
@@ -42,6 +49,21 @@ namespace FishAquarium
             Color = Brushes.Gray;
             GiveEnergy = 3;
             Type = "Die";
+        }
+
+        public void FishMove()
+        {
+            Speed = rand.Next(5, 10);
+            Dx = rand.Next(-1, 2);
+            Dy = rand.Next(-1, 2);
+            int xMove = PosX + Speed * Dx;
+            int yMove = PosY + Speed * Dy;
+
+            if (xMove >)
+            PosX += Speed * Dx;
+            PosY += Speed * Dy;
+            Body.X = PosX;
+            Body.Y = PosY;
         }
     }
 
@@ -52,7 +74,7 @@ namespace FishAquarium
             Type = "Pred";
             Energy = 50;
             Color = Brushes.Red;
-            LayerOdds = new double[] { 1, 0.6, 0.2, 0.1, 0.08, 0.2, 0.1, 0.05, 0.03, 0.005, 0.0002 };
+            /*LayerOdds = new double[] { 1, 0.6, 0.2, 0.1, 0.08, 0.2, 0.1, 0.05, 0.03, 0.005, 0.0002 };
             Weights = new Dictionary<string, double>
             {
                 ["Pred"] = 0,
@@ -60,7 +82,7 @@ namespace FishAquarium
                 ["Herb"] = 0.7,
                 ["Die"] = 0.5,
                 ["None"] = 0,
-            };
+            };*/
         }
     }
 
