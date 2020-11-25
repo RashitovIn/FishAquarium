@@ -94,16 +94,16 @@ namespace FishAquarium
             {
                 state = random.Next(100 - (int)nudDensity.Value) == 0;
 
-                if (i <= ratio[0] + ratio[1] / 2 && state && fishPredCount < ratio[0])
-                {
+                //if (i <= ratio[0] + ratio[1] / 2 && state && fishPredCount < ratio[0])
+                //{
                     int xx = random.Next(0, width);
                     int yy = random.Next(0, height);
                     PredFish fish = new PredFish(xx, yy);
                     worldArr[i] = fish;
-                    fishCount++;
+                    //fishCount++;
                     fishPredCount++;
-                }
-                else if (i > ratio[0] + ratio[1] / 2 && state && fishHerbCount < ratio[1])
+               // }
+                /*else if (i > ratio[0] + ratio[1] / 2 && state && fishHerbCount < ratio[1])
                 {
                     int xx = random.Next(0, width);
                     int yy = random.Next(0, height);
@@ -115,7 +115,7 @@ namespace FishAquarium
                     fishCount++;
                     fishHerbCount++;
                     worldArr[i] = fish;
-                }
+                }*/
             }
 
 

@@ -59,7 +59,7 @@ namespace FishAquarium
             int xMove = PosX + Speed * Dx;
             int yMove = PosY + Speed * Dy;
 
-            if (xMove >)
+            //if (xMove >)
             PosX += Speed * Dx;
             PosY += Speed * Dy;
             Body.X = PosX;
