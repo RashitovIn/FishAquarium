@@ -1,32 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Drawing.Drawing2D;
+using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace FishAquarium
 {
     public partial class Form1 : Form
     {
-        private int currentGen = 0;
         private Graphics graphics;
+        private List<Entity> worldArr;
+        private World world;
+        private Random random;
+        public GraphicsPath ground;
+        private int currentGen = 0;
         private int[] ratio = new int[2];
         private int width;
         private int height;
+        private readonly int MAX_FISH_WIDTH = 200;
+        private readonly int MAX_FISH_HEIGHT = 100;
 
-        private Entity[] worldArr;
+        private int bitmapsCount;
+        private Bitmap[,] Bitmaps;
+
         public int fishCount;
         public int fishPredCount;
         public int fishHerbCount;
 
-        Font drawFont = new Font("Arial", 7);
-        SolidBrush drawBrush = new SolidBrush(Color.White);
+        public Font drawFont = new Font("Arial", 10);
+        public SolidBrush drawBrush = new SolidBrush(Color.Black);
 
         public Form1()
         {
@@ -38,8 +42,38 @@ namespace FishAquarium
             Text = $"Аквариум";
         }
 
+        private void LoadImages(string[,] usedBitmaps)
+        {
+            Bitmaps = new Bitmap[bitmapsCount, 2];
+
+            var appDir = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory()));
+            var fullPath = Path.Combine(appDir, @"src");
+            Bitmap[] image = new Bitmap[2];
+
+            for (int i = 0; i < bitmapsCount; i++)
+            {
+                image[0] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 0])));
+                image[1] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 1])));
+                image[0].MakeTransparent(Color.FromArgb(255, 255, 255));
+                image[1].MakeTransparent(Color.FromArgb(255, 255, 255));
+                Bitmaps[i, 0] = image[0];
+                Bitmaps[i, 1] = image[1];
+            }
+        }
+
         private void StartWorld()
         {
+            string[,] usedBitmaps = new string[,]
+            {
+                {"okun.bmp", "okun_dead.bmp"},
+                {"chuka.bmp", "chuka_dead.bmp"},
+                {"fish_xz.bmp", "fish_xz_dead.bmp"},
+                {"worm.bmp", "worm.bmp"}
+            };
+
+            bitmapsCount = usedBitmaps.Length / 2;
+            LoadImages(usedBitmaps);
+           
             if (timer.Enabled)
                 return;
 
@@ -51,7 +85,6 @@ namespace FishAquarium
             nudDensity.Enabled = false;
             ratioTB.Enabled = false;
             contBtn.Enabled = false;
-
 
             bool state;
             fishPredCount = 0;
@@ -67,115 +100,95 @@ namespace FishAquarium
             }
 
             fishCount = ratio[0] + ratio[1];
-            worldArr = new Entity[fishCount];
+            worldArr = new List<Entity>();
             width = fieldPB.Width;
             height = fieldPB.Height;
+            world = new World(width, height);
 
-            /*HerbFish fish = new HerbFish(5, 5);
-            fishCount++;
-            fishPredCount++;
-            fishArr[5, 5] = fish;*/
-            /*PredFish fish1 = new PredFish(50, 50, Brushes.Red);
-            fishCount++;
-            fishPredCount++;
-            fishArr[0, 4] = fish1;*/
+            random = new Random();
 
-
-            /*Worm worm = new Worm(0, 2, Brushes.Yellow);
-            fishArr[0, 2] = worm;
-            Worm worm1 = new Worm(0, 2, Brushes.Yellow);
-            fishArr[1, 3] = worm1;
-            Worm worm2 = new Worm(0, 2, Brushes.Yellow);
-            fishArr[1, 2] = worm2;
-            Worm worm3 = new Worm(0, 2, Brushes.Yellow);
-            fishArr[1, 4] = worm3;*/
-            Random random = new Random();
-            for (i = 0; i < fishCount; i++)
+            i = 0;
+            int x, y;
+            int lastX = 0;
+            int lastY = 50;
+            while (i < ratio[0])
             {
-                state = random.Next(100 - (int)nudDensity.Value) == 0;
+                x = (lastX + width + MAX_FISH_WIDTH) % width;
 
-                //if (i <= ratio[0] + ratio[1] / 2 && state && fishPredCount < ratio[0])
-                //{
-                    int xx = random.Next(0, width);
-                    int yy = random.Next(0, height);
-                    PredFish fish = new PredFish(xx, yy);
-                    worldArr[i] = fish;
-                    //fishCount++;
-                    fishPredCount++;
-               // }
-                /*else if (i > ratio[0] + ratio[1] / 2 && state && fishHerbCount < ratio[1])
-                {
-                    int xx = random.Next(0, width);
-                    int yy = random.Next(0, height);
-                    PredFish fish = new PredFish(xx, yy);
-                    worldArr[i] = fish;
-                    fishCount++;
-                    fishPredCount++;
-                    HerbFish fish = new HerbFish(x, y);
-                    fishCount++;
-                    fishHerbCount++;
-                    worldArr[i] = fish;
-                }*/
+                y = lastY;
+                if (x + MAX_FISH_WIDTH >= width)
+                    y = (y + MAX_FISH_HEIGHT + height) % height;
+                lastX = x;
+                lastY = y;
+                PredFish fish = new PredFish(x, y, Bitmaps.GetRow(1), random);
+                worldArr.Add(fish);
+                fishPredCount++;
+                i++;
             }
 
+            while (i < fishCount)
+            {
+                x = (lastX + width + MAX_FISH_WIDTH) % width;
+
+                y = lastY;
+                if (x + MAX_FISH_WIDTH >= width)
+                    y = (y + MAX_FISH_HEIGHT + height) % height;
+                lastX = x;
+                lastY = y;
+                HerbFish fish = new HerbFish(x, y, Bitmaps.GetRow(0), random);
+                worldArr.Add(fish);
+                fishHerbCount++;
+                i++;
+            }
 
             fieldPB.Image = new Bitmap(fieldPB.Width, fieldPB.Height);
             graphics = Graphics.FromImage(fieldPB.Image);
             countLb.Text = Convert.ToString(fishCount);
             predCountLb.Text = Convert.ToString(fishPredCount);
             herbCountLb.Text = Convert.ToString(fishHerbCount);
+
+            ground = new GraphicsPath();
+            float[] X = { 0, 0, (float)(width * 0.2), (float)(width * 0.45), (float)(width * 0.58), (float)(width * 0.79), (float)(width * 0.95), width, width };
+            float[] Y = { height, height * (float)0.75, height * (float)0.95, height * (float)0.85, height * (float)0.9, height - 10, height * (float)0.9, height * (float)0.75, height };
+
+            PointF[] curvePoints = new PointF[Y.Length];
+            for (i = 0; i < curvePoints.Length; i++)
+            {
+                PointF point = new PointF(X[i], Y[i]);
+                curvePoints[i] = point;
+            }
+
+            ground.AddClosedCurve(curvePoints);
+            ground.CloseAllFigures();
+
             timer.Start();
+        }
+
+        private void Debug(Entity fish)
+        {
+            graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
+            graphics.DrawString(Convert.ToString(fish.Dx) + "  |  " + Convert.ToString(fish.ldx), new Font("Arial", 14), Brushes.Black, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
+            Pen p = new Pen(Color.Green, 2);
+            graphics.DrawLine(p, (float)fish.PosX, (float)fish.PosY, (float)fish.Target[0], (float)fish.Target[1]);
         }
 
         private void Upgrade()
         {
             graphics.Clear(Color.FromArgb(0, Color.White));
-            //World world = new World(cols, rows);
-
-            /*for (int x = 0; x < cols; x++)
+            foreach (Entity fish in worldArr)
             {
-                for (int y = 0; y < rows; y++)
+                graphics.FillPath(Brushes.Brown, ground);
+                world.UpdateWorld(ref worldArr, fish, ref listBox1);
+                graphics.FillRectangle(fish.Color, fish.Body);
+                if (fish.Type != "Worm" && fish.Type != "Die")
                 {
-                    if (worldArr[x, y] != null && worldArr[x, y].State)
-                    {
-                        world.UpdateWorld(ref worldArr, x, y, ref listBox1);
-                    }
+                    Debug(fish);
+                    //graphics.DrawString(Convert.ToString(fish.Energy), drawFont, drawBrush, fish.PosX, fish.PosY);
                 }
+                if (ground.IsVisible(fish.PosX, fish.PosY))
+                    listBox1.Items.Add("Yes");
+                graphics.DrawImage(fish.Sprite, fish.Body);
             }
-
-            for (int x = 0; x < cols; x++)
-            {
-                for (int y = 0; y < rows; y++)
-                {
-                    if (worldArr[x, y] != null)
-                    {
-                        worldArr[x, y].Checked = false;
-
-                        //graphics.DrawImage(newImage, fishArr[x, y].PosX * resolution + (float)0.5, fishArr[x, y].PosY * resolution + (float)0.5, resolution - 1, resolution - 1);
-                        graphics.FillRectangle(worldArr[x, y].Color, worldArr[x, y].PosX * resolution + (float)0.5, worldArr[x, y].PosY * resolution + (float)0.5, resolution - 1, resolution - 1);
-                        graphics.DrawString(Convert.ToString(worldArr[x, y].Energy), drawFont, drawBrush, worldArr[x, y].PosX * resolution + (float)0.5, worldArr[x, y].PosY * resolution + (float)0.5);
-                    }
-                }
-            }*/
-
-            for (int i = 0; i < fishCount; i++)
-            {
-                graphics.FillRectangle(worldArr[i].Color, worldArr[i].Body);
-                worldArr[i].FishMove();
-            }
-
-                /*Pen greenPen = new Pen(Color.Gray, 5);
-
-                PointF[] curvePoints = new PointF[7];
-                float[] Y = { 15, 15, 0.5F, 0.5F, 0.5F, 15, 15 };
-                for (int i = 0; i < 7; i++)
-                {
-                    PointF point = new PointF(i * cols * resolution / 6, (rows - Y[i]) * resolution );
-                    listBox1.Items.Add(Convert.ToString(i * cols * resolution / 6 + " " + (rows - Y[i]) * resolution));
-                    curvePoints[i] = point;
-                }
-
-                graphics.DrawCurve(greenPen, curvePoints, 0.2F);*/
 
             fieldPB.Refresh();
             genLb.Text = Convert.ToString(++currentGen);
@@ -224,37 +237,48 @@ namespace FishAquarium
 
         private void FieldPB_MouseMove(object sender, MouseEventArgs e)
         {
-            /*if (!timer.Enabled)
+            if (!timer.Enabled)
                 return;
 
             if (e.Button == MouseButtons.Left)
             {
-                var x = e.Location.X / resolution;
-                var y = e.Location.Y / resolution;
-                var validationPassed = ValidateMousePosition(x, y);
-                if (validationPassed && worldArr[x, y] == null)
-                {
-                    Worm worm = new Worm(x, y);
-                    worldArr[x, y] = worm;
-                }
-                    
+                var x = e.Location.X;
+                var y = e.Location.Y;
+                var validationPassed = ValidateMousePosition(x, y, 'l');
+                Worm worm = new Worm(x, y, Bitmaps.GetRow(3), random);
+                if (validationPassed && !World.CheckCollisionFromAllSides(worldArr, worm))
+                    worldArr.Add(worm);
             }
 
             if (e.Button == MouseButtons.Right)
             {
-                var x = e.Location.X / resolution;
-                var y = e.Location.Y / resolution;
+                var x = e.Location.X;
+                var y = e.Location.Y;
                 var validationPassed = ValidateMousePosition(x, y);
-                if (validationPassed && worldArr[x, y] != null)
+
+                if (validationPassed)
                 {
-                    worldArr[x, y] = null;
+                    foreach (Entity fish in worldArr)
+                    {
+                        if (fish.Body.Contains(x, y))
+                        {
+                            worldArr.Remove(fish);
+                            return;
+                        }
+                    }
                 }
-            }*/
+            }
         }
 
         private bool ValidateMousePosition(int x, int y)
         {
-            return true;//x >= 0 && y >= 0 && x < cols && y < rows;
+            return x >= 0 && y >= 0 && x < width && y < height;
         }
+
+        private bool ValidateMousePosition(int x, int y, char l)
+        {
+            return x >= 0 && y >= 0 && x < width - 50 && y < height - 50;
+        }
+
     }
 }

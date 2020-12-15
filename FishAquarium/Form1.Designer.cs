@@ -150,7 +150,7 @@
             this.ratioTB.Name = "ratioTB";
             this.ratioTB.Size = new System.Drawing.Size(136, 20);
             this.ratioTB.TabIndex = 1;
-            this.ratioTB.Text = "50/50";
+            this.ratioTB.Text = "5/5";
             this.ratioTB.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // stopBtn
@@ -264,7 +264,7 @@
             this.TimerTrackBar.LargeChange = 50;
             this.TimerTrackBar.Location = new System.Drawing.Point(9, 51);
             this.TimerTrackBar.Maximum = 1000;
-            this.TimerTrackBar.Minimum = 100;
+            this.TimerTrackBar.Minimum = 50;
             this.TimerTrackBar.Name = "TimerTrackBar";
             this.TimerTrackBar.Size = new System.Drawing.Size(172, 45);
             this.TimerTrackBar.TabIndex = 10;
@@ -336,9 +336,9 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(10, 132);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(66, 13);
+            this.label3.Size = new System.Drawing.Size(105, 13);
             this.label3.TabIndex = 6;
-            this.label3.Text = "Поколение:";
+            this.label3.Text = "Итерация таймера:";
             // 
             // genLb
             // 

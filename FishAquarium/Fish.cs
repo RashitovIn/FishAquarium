@@ -12,56 +12,71 @@ namespace FishAquarium
     abstract class Entity
     {
         public Rectangle Body;
+        public Bitmap Sprite;
+        public Bitmap deadSprite;
+        public Bitmap aliveSprite;
         public Brush Color { get; set; }
         public bool State { get; set; } //жива или мертва
         public int PosX { get; set; }
         public int PosY { get; set; }
-        public double[] Target { get; set; }
-        public double TargetLimiter { get; set; }
+        public int[] Target { get; set; }
+        public int[,] TargetLimiter { get; set; }
         public int SignOfGoal { get; set; }
         public double Energy { get; set; }
         public int Speed { get; set; }
         public double GiveEnergy { get; set; }
         public string Type { get; set; }
-        public int Dx { get; set; }
+        public int ldx = -1;
+        public int Dx { get; set; } = -1;
         public int Dy { get; set; }
 
-        Random rand;
+        Random random;
 
         public Dictionary<string, double> Weights { get; set; }
         public double[] LayerOdds { get; set; } // Коэффициенты слоёв
 
-        public Entity(int posX, int posY)
+        public Entity(int posX, int posY, Bitmap[] sprite)
         {
-            rand = new Random(posX + posY);
+            random = new Random(posX + posY);
             PosX = posX;
             PosY = posY;
             State = true;
-            //Color = color;
-            Target = new double[2];
-            Target[0] = PosX;
-            Target[1] = PosY;
-            Body = new Rectangle(posX, posY, 20, 10);
+            Target = new int[2];
+            Target[0] = posX;
+            Target[1] = posY;
+            TargetLimiter = new int[4, 2];
+            aliveSprite = sprite[0];
+            deadSprite = sprite[1];
+            Sprite = aliveSprite;
+            Color = Brushes.Transparent;
         }
 
         public void FishDie()
         {
-            Color = Brushes.Gray;
+            //Color = Brushes.Gray;
+            Sprite = deadSprite;
             GiveEnergy = 3;
             Type = "Die";
+            Dx = 0;
+            Dy = -1;
         }
 
-        public void FishMove()
+        public void FishChangeDir(int Dx, int value)
         {
-            Speed = rand.Next(5, 10);
-            Dx = rand.Next(-1, 2);
-            Dy = rand.Next(-1, 2);
-            int xMove = PosX + Speed * Dx;
-            int yMove = PosY + Speed * Dy;
+            if (Dx * -1 == value)
+                Sprite.RotateFlip(RotateFlipType.RotateNoneFlipX);
+        }
 
-            //if (xMove >)
-            PosX += Speed * Dx;
-            PosY += Speed * Dy;
+        public void FishMove(int OptSpeedX, int OptSpeedY)
+        {
+            if (Dx != ldx && Dx != 0)
+            {
+                Sprite.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                ldx = Dx;
+            }
+
+            PosX += OptSpeedX * Dx;
+            PosY += OptSpeedY * Dy;
             Body.X = PosX;
             Body.Y = PosY;
         }
@@ -69,11 +84,13 @@ namespace FishAquarium
 
     class PredFish : Entity
     {        
-        public PredFish(int posX, int posY) :base(posX, posY)
+        public PredFish(int posX, int posY, Bitmap[] sprite, Random random) :base(posX, posY, sprite)
         {
             Type = "Pred";
-            Energy = 50;
-            Color = Brushes.Red;
+            Energy = 1000;
+            //Color = Brushes.Red;
+            Speed = random.Next(5, 20);
+            Body = new Rectangle(posX, posY, 160, 50);
             /*LayerOdds = new double[] { 1, 0.6, 0.2, 0.1, 0.08, 0.2, 0.1, 0.05, 0.03, 0.005, 0.0002 };
             Weights = new Dictionary<string, double>
             {
@@ -88,13 +105,14 @@ namespace FishAquarium
 
     class HerbFish : Entity
     {
-        public HerbFish(int posX, int posY) : base(posX, posY)
+        public HerbFish(int posX, int posY, Bitmap[] sprite, Random random) : base(posX, posY, sprite)
         {
             Type = "Herb";
-            Energy = 10;
-            Color = Brushes.Green;
-            GiveEnergy = 5;
-            LayerOdds = new double[] { 1, 0.5, 0.2, 0.1, 0.08, 0.2, 0.1, 0.05, 0.03, 0.005, 0.0002 };
+            Energy = 1000;
+            //Color = Brushes.Green;
+            Speed = random.Next(5, 20);
+            Body = new Rectangle(posX, posY, 80, 50);
+            /*LayerOdds = new double[] { 1, 0.5, 0.2, 0.1, 0.08, 0.2, 0.1, 0.05, 0.03, 0.005, 0.0002 };
             Weights = new Dictionary<string, double>
             {
                 ["Pred"] = 0.9,
@@ -102,26 +120,27 @@ namespace FishAquarium
                 ["Herb"] = 0,
                 ["Die"] = 0,
                 ["None"] = 0,
-            };
+            };*/
         }
     }
 
     class Worm : Entity
     {
-        public Worm(int posX, int posY) : base(posX, posY)
+        public Worm(int posX, int posY, Bitmap[] sprite, Random random) : base(posX, posY, sprite)
         {
-            PosX = posX;
-            PosY = posY;
-            State = true;
-            Color = Brushes.Yellow;
+            //Color = Brushes.Yellow;
             GiveEnergy = 10;
             Type = "Worm";
             Energy = 0;
+            Speed = random.Next(5, 15);
+            Dx = 0;
+            Dy = 1;
+            Body = new Rectangle(posX, posY, 25, 25);
         }
     }
     class Weed : Entity
     {
-        public Weed(int posX, int posY) : base(posX, posY)
+        public Weed(int posX, int posY, Bitmap[] sprite) : base(posX, posY, sprite)
         {
             PosX = posX;
             PosY = posY;
