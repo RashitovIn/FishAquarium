@@ -62,27 +62,6 @@ namespace FishAquarium
             Dy = -1;
         }
 
-        public void FishRotate()
-        {
-            /*if (Dx != ldx && Dx != 0)
-            {
-                if (Dx == -1)
-                {
-                    dInfo = "left";
-                    Sprite = aliveLeftSprite;
-                    Head[0] = PosX;
-                }
-                else if (Dx == 1)
-                {
-                    dInfo = "right";
-                    Sprite = aliveRightSprite;
-                    Head[0] = PosX + Body.Width;
-                }
-                //fish.Sprite.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                ldx = Dx;
-            }*/
-        }
-
         public void FishMove(int OptSpeedX, int OptSpeedY)
         {
             PosX += OptSpeedX * Dx;

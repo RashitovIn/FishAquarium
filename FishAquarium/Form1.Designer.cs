@@ -150,7 +150,7 @@
             this.ratioTB.Name = "ratioTB";
             this.ratioTB.Size = new System.Drawing.Size(136, 20);
             this.ratioTB.TabIndex = 1;
-            this.ratioTB.Text = "5/5";
+            this.ratioTB.Text = "2/0";
             this.ratioTB.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // stopBtn

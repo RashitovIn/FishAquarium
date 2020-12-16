@@ -178,12 +178,12 @@ namespace FishAquarium
 
         private void Debug(Entity fish)
         {
-            //graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
-            //graphics.FillRectangle(Brushes.Yellow, fish.Head[0], fish.Head[1], 5, 5);
+            graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
+            graphics.FillRectangle(Brushes.Yellow, fish.Head[0], fish.Head[1], 5, 5);
             //graphics.DrawString(Convert.ToString(fish.Dx) + "  |  " + Convert.ToString(fish.ldx), new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
-            //graphics.DrawString(fish.dInfo, new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
+            graphics.DrawString(fish.dInfo, new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
             Pen p = new Pen(Color.Green, 2);
-            //graphics.DrawLine(p, (float)fish.Head[0], (float)fish.Head[1], (float)fish.Target[0], (float)fish.Target[1]);
+            graphics.DrawLine(p, (float)fish.Head[0], (float)fish.Head[1], (float)fish.Target[0], (float)fish.Target[1]);
         }
 
         private void Upgrade()

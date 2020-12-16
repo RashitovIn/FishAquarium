@@ -42,7 +42,7 @@ namespace FishAquarium
             Rectangle actRect = new Rectangle(fish.PosX, fish.PosY, fish.Body.Width, fish.Body.Height);
             foreach (Entity obj in worldArr)
             {
-                if (obj != fish && obj.Body.IntersectsWith(actRect))
+                if (obj != fish && obj.Type != "Worm" && obj.Body.IntersectsWith(actRect))
                 {
                     return true;
                 }
@@ -57,7 +57,7 @@ namespace FishAquarium
             Rectangle actRect = new Rectangle(fish.PosX + fish.Dx * fish.Speed, fish.PosY + fish.Dy * fish.Speed, fish.Body.Width, fish.Body.Height);
             foreach (Entity obj in worldArr)
             {
-                if (obj != fish && obj.Body.IntersectsWith(actRect))
+                if (obj != fish && obj.Type != "Worm" && obj.Body.IntersectsWith(actRect))
                 {
                     if (fish.Dx > 0)
                         collSide.Add('r');
@@ -225,12 +225,12 @@ namespace FishAquarium
 
             int maxI = MaxListInd(pref);
 
-            if (fish.Type == "Pred")
+            if (fish.Type == "Pred" && sight[maxI].Type != "Pred")
             {
                 fish.Target[0] = sight[maxI].PosX + sight[maxI].Body.Width / 2;
                 fish.Target[1] = sight[maxI].PosY + sight[maxI].Body.Height / 2;
             }
-            else if (fish.Type == "Herb")
+            else if (fish.Type == "Herb" && sight[maxI].Type != "Herb")
             {
                 if (isPred)
                 {
@@ -258,8 +258,8 @@ namespace FishAquarium
 
                     if (minDistToEnemy != 9999999)
                     {
-                        int targetX = 0;
-                        int targetY = 0;
+                        int targetX;
+                        int targetY;
                         if ((int)cautionVecX * fish.Dx >= Width)
                             targetX = Width;
                         else if ((int)cautionVecX * fish.Dx <= 0)
@@ -311,7 +311,7 @@ namespace FishAquarium
         {
             if (obj.Type == "Worm" || obj.Type == "Die")
             {
-                if (CheckCollision(worldArr, obj).Count == 0 && CheckBorders(obj))
+                if (CheckBorders(obj))//CheckCollision(worldArr, obj).Count == 0 &&
                 {
                     obj.FishMove(obj.Speed, obj.Speed);
                 }
@@ -324,8 +324,10 @@ namespace FishAquarium
             }
             else
             {
-                if (obj.Target[0] == obj.Head[0] && obj.Target[1] == obj.Head[1])
+                if (obj.Body.Contains(obj.Target[0], obj.Target[1]))
                     GetTarget(obj);
+                //if (obj.Target[0] == obj.Head[0] && obj.Target[1] == obj.Head[1])
+                  //  GetTarget(obj);
             }
 
             PrepareFishMove(worldArr, obj);
@@ -338,231 +340,8 @@ namespace FishAquarium
 
             //onCount += worldArr[i].FishMove;
 
-            //onCount?.Invoke();
+            onCount?.Invoke();
         }
-
-        /*private void GetDefTarget(Entity fish, string[,] field, ListBox lb)
-        {
-            int n = field.GetLength(0);
-            double[,] oddsField = new double[n, n];
-            bool isZero = true;
-
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    if (field[i, j] != null)
-                        oddsField[i, j] = fish.Weights[field[i, j]];
-                    else
-                        oddsField[i, j] = 0;
-
-                    if (oddsField[i, j] != 0)
-                        isZero = false;
-                }
-            }
-
-            n--;
-            int layersCount = n / 2 - 1;
-            if (!isZero)
-            {
-                int count = 0;
-                int col;
-                while (layersCount > -1)
-                {
-                    col = 0 + count;
-                    for (int j = count; j <= n - count; j++)
-                    {
-                        oddsField[col, j] = oddsField[col, j] * fish.LayerOdds[layersCount];
-                    }
-
-                    col = n - count;
-                    for (int j = count; j <= n - count; j++)
-                    {
-                        oddsField[col, j] = oddsField[col, j] * fish.LayerOdds[layersCount];
-                    }
-
-                    for (int j = count + 1; j <= n - count - 1; j++)
-                    {
-                        oddsField[count, j] = oddsField[count, j] * fish.LayerOdds[layersCount];
-                    }
-
-                    for (int j = count + 1; j <= n - count - 1; j++)
-                    {
-                        oddsField[n - count, j] = oddsField[n - count, j] * fish.LayerOdds[layersCount];
-                    }
-
-                    layersCount--;
-                    count++;
-                }
-
-                int stepX;
-                int stepY;
-                int[] target = new int[2];
-                int[] maxInd = MaxIndex(oddsField);
-                //
-                for (int i = 0; i <= n; i++)
-                {
-                    lb.Items.Add(Convert.ToString(oddsField[i, 0] + " " + oddsField[i, 1] + " " + oddsField[i, 2] + " " + oddsField[i, 3] + " " + oddsField[i, 4]));
-                }
-                lb.Items.Add("--");
-                lb.Items.Add(Convert.ToString(maxInd[0] + " " + maxInd[1]));
-                lb.Items.Add("---------------");
-                //
-
-                if (oddsField[maxInd[0], maxInd[1]] == 0)
-                {
-                    return;
-                }
-                stepX = maxInd[0] - n / 2;
-                stepY = maxInd[1] - n / 2;
-
-                target[0] = fish.PosX + stepX;
-                target[1] = fish.PosY + stepY;
-                fish.Target = target;
-            }
-            else
-                GetTarget(fish, random);
-        }
-
-        private int[] MaxIndex(double[,] mat)
-        {
-            int[] maxI = new int[2];
-            int mX = 0;
-            int mY = 0;
-            int n = mat.GetLength(0);
-
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    if (mat[i, j] > mat[mX, mY])
-                    {
-                        mX = i;
-                        mY = j;
-                    }
-                }
-            }
-
-            maxI[0] = mX;
-            maxI[1] = mY;
-            return maxI;
-        }
-
-        private string CheckType(int x, int y)
-        {
-            string type = null;
-
-            if (localWorldArr[x, y] != null)
-            {
-                if (localWorldArr[x, y].PosX == x && localWorldArr[x, y].PosY == y)
-                {
-                    type = localWorldArr[x, y].Type;
-                }
-            }/*
-            else
-            {
-                type = "None";
-            }*/
-        /*
-            return type;
-        }
-
-        private string[,] FishRadar(Entity fish)
-        {
-            int sens = 5;
-            int x = fish.PosX;
-            int y = fish.PosY;
-            int xi;
-            int yj;
-            string[,] field = new string[sens * 2 + 1, sens * 2 + 1];
-
-            for (int i = -sens; i <= sens; i++)
-            {
-                xi = x + i;
-
-                if (xi >= 0 && xi < cols)
-                {
-                    for (int j = -sens; j <= sens; j++)
-                    {
-                        yj = y + j;
-
-                        if (yj >= 0 && yj < rows)
-                        {
-                            if (xi != x || yj != y)
-                                //field[i + sens, j + sens] = fish[xi, yj];
-                                field[i + sens, j + sens] = CheckType(xi, yj);
-                        }
-                    }
-                }
-            }
-
-            return field;
-        }
-
-        private void FishMove(Entity fish)
-        {
-            if (fish.Target[0] > fish.PosX)
-            {
-                if (CheckMove(fish.PosX + 1, fish.PosY, fish))
-                {
-                    fish.PosX = fish.PosX + 1;
-                    xMove = true;
-                }
-            }
-            else if (fish.Target[0] < fish.PosX)
-            {
-                if (CheckMove(fish.PosX - 1, fish.PosY, fish))
-                {
-                    fish.PosX = fish.PosX - 1;
-                    xMove = true;
-                }
-            }
-
-            if (fish.Target[1] > fish.PosY)
-            {
-                if (CheckMove(fish.PosX, fish.PosY + 1, fish))
-                {
-                    fish.PosY = fish.PosY + 1;
-                    yMove = true;
-                }
-            }
-            else if (fish.Target[1] < fish.PosY)
-            {
-                if (CheckMove(fish.PosX, fish.PosY - 1, fish))
-                {
-                    fish.PosY = fish.PosY - 1;
-                    yMove = true;
-                }
-            }
-        }
-
-        private bool CheckMove(int NextPosX, int NextPosY, Entity fish)
-        {
-            if (NextPosY < rows && NextPosY >= 0 && NextPosX < cols && NextPosX >= 0)
-            {
-                if (localWorldArr[NextPosX, NextPosY] == null)
-                    return true;
-
-                if (fish.Type == "Pred")
-                {
-                    if (localWorldArr[NextPosX, NextPosY].Type == "Worm" || localWorldArr[NextPosX, NextPosY].Type == "Herb" || localWorldArr[NextPosX, NextPosY].Type == "Die")
-                    {
-                        fish.Energy += localWorldArr[NextPosX, NextPosY].GiveEnergy;
-                        return true;
-                    }
-                }
-                else if (fish.Type == "Herb")
-                {
-                    if (localWorldArr[NextPosX, NextPosY].Type == "Worm")
-                    {
-                        fish.Energy += localWorldArr[NextPosX, NextPosY].GiveEnergy;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }*/
     }
 
     public static class ArrayExtensions
