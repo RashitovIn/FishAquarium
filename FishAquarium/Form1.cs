@@ -44,20 +44,24 @@ namespace FishAquarium
 
         private void LoadImages(string[,] usedBitmaps)
         {
-            Bitmaps = new Bitmap[bitmapsCount, 2];
+            Bitmaps = new Bitmap[bitmapsCount, 3];
 
             var appDir = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory()));
             var fullPath = Path.Combine(appDir, @"src");
-            Bitmap[] image = new Bitmap[2];
+            Bitmap[] image = new Bitmap[3];
 
             for (int i = 0; i < bitmapsCount; i++)
             {
                 image[0] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 0])));
                 image[1] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 1])));
+                image[2] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 0])));
                 image[0].MakeTransparent(Color.FromArgb(255, 255, 255));
                 image[1].MakeTransparent(Color.FromArgb(255, 255, 255));
+                image[2].MakeTransparent(Color.FromArgb(255, 255, 255));
+                image[2].RotateFlip(RotateFlipType.RotateNoneFlipX);
                 Bitmaps[i, 0] = image[0];
                 Bitmaps[i, 1] = image[1];
+                Bitmaps[i, 2] = image[2];
             }
         }
 
@@ -86,7 +90,7 @@ namespace FishAquarium
             ratioTB.Enabled = false;
             contBtn.Enabled = false;
 
-            bool state;
+            //bool state;
             fishPredCount = 0;
             fishHerbCount = 0;
             string text = ratioTB.Text;
@@ -140,6 +144,14 @@ namespace FishAquarium
                 fishHerbCount++;
                 i++;
             }
+            /*PredFish fish = new PredFish(100, 100, Bitmaps.GetRow(1), random);
+            worldArr.Add(fish);
+            HerbFish fishs = new HerbFish(200, 200, Bitmaps.GetRow(0), random);
+            worldArr.Add(fishs);
+            PredFish fishhh = new PredFish(300, 300, Bitmaps.GetRow(1), random);
+            worldArr.Add(fishhh);
+            HerbFish fishshh = new HerbFish(400, 400, Bitmaps.GetRow(0), random);
+            worldArr.Add(fishshh);*/
 
             fieldPB.Image = new Bitmap(fieldPB.Width, fieldPB.Height);
             graphics = Graphics.FromImage(fieldPB.Image);
@@ -166,10 +178,12 @@ namespace FishAquarium
 
         private void Debug(Entity fish)
         {
-            graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
-            graphics.DrawString(Convert.ToString(fish.Dx) + "  |  " + Convert.ToString(fish.ldx), new Font("Arial", 14), Brushes.Black, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
+            //graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
+            //graphics.FillRectangle(Brushes.Yellow, fish.Head[0], fish.Head[1], 5, 5);
+            //graphics.DrawString(Convert.ToString(fish.Dx) + "  |  " + Convert.ToString(fish.ldx), new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
+            //graphics.DrawString(fish.dInfo, new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
             Pen p = new Pen(Color.Green, 2);
-            graphics.DrawLine(p, (float)fish.PosX, (float)fish.PosY, (float)fish.Target[0], (float)fish.Target[1]);
+            //graphics.DrawLine(p, (float)fish.Head[0], (float)fish.Head[1], (float)fish.Target[0], (float)fish.Target[1]);
         }
 
         private void Upgrade()
@@ -177,17 +191,21 @@ namespace FishAquarium
             graphics.Clear(Color.FromArgb(0, Color.White));
             foreach (Entity fish in worldArr)
             {
-                graphics.FillPath(Brushes.Brown, ground);
-                world.UpdateWorld(ref worldArr, fish, ref listBox1);
-                graphics.FillRectangle(fish.Color, fish.Body);
-                if (fish.Type != "Worm" && fish.Type != "Die")
+                if (fish.State)
                 {
-                    Debug(fish);
-                    //graphics.DrawString(Convert.ToString(fish.Energy), drawFont, drawBrush, fish.PosX, fish.PosY);
+                    //graphics.FillRectangle(Brushes.Blue, fish.viewRadius);
+                    //graphics.FillPath(Brushes.Brown, ground);
+                    graphics.FillRectangle(fish.Color, fish.Body);
+                    //if (ground.IsVisible(fish.PosX, fish.PosY))
+                    //listBox1.Items.Add("Yes");
+                    graphics.DrawImage(fish.Sprite, fish.Body);
+                    if (fish.Type != "Worm" && fish.Type != "Die")
+                    {
+                        Debug(fish);
+                        //graphics.DrawString(Convert.ToString(fish.Energy), drawFont, drawBrush, fish.PosX, fish.PosY);
+                    }
                 }
-                if (ground.IsVisible(fish.PosX, fish.PosY))
-                    listBox1.Items.Add("Yes");
-                graphics.DrawImage(fish.Sprite, fish.Body);
+                world.UpdateWorld(ref worldArr, fish, ref listBox1);
             }
 
             fieldPB.Refresh();
