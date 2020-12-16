@@ -30,7 +30,7 @@ namespace FishAquarium
         public int fishHerbCount;
 
         public Font drawFont = new Font("Arial", 10);
-        public SolidBrush drawBrush = new SolidBrush(Color.Black);
+        public SolidBrush drawBrush = new SolidBrush(Color.White);
 
         public Form1()
         {
@@ -118,13 +118,12 @@ namespace FishAquarium
             while (i < ratio[0])
             {
                 x = (lastX + width + MAX_FISH_WIDTH) % width;
-
                 y = lastY;
                 if (x + MAX_FISH_WIDTH >= width)
                     y = (y + MAX_FISH_HEIGHT + height) % height;
                 lastX = x;
                 lastY = y;
-                PredFish fish = new PredFish(x, y, Bitmaps.GetRow(1), random);
+                PredFish fish = new PredFish(x, y, Bitmaps.GetRow(1), 100, 30, random);
                 worldArr.Add(fish);
                 fishPredCount++;
                 i++;
@@ -133,13 +132,12 @@ namespace FishAquarium
             while (i < fishCount)
             {
                 x = (lastX + width + MAX_FISH_WIDTH) % width;
-
                 y = lastY;
                 if (x + MAX_FISH_WIDTH >= width)
                     y = (y + MAX_FISH_HEIGHT + height) % height;
                 lastX = x;
                 lastY = y;
-                HerbFish fish = new HerbFish(x, y, Bitmaps.GetRow(0), random);
+                HerbFish fish = new HerbFish(x, y, Bitmaps.GetRow(0), 60, 30, random);
                 worldArr.Add(fish);
                 fishHerbCount++;
                 i++;
@@ -181,7 +179,7 @@ namespace FishAquarium
             graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
             graphics.FillRectangle(Brushes.Yellow, fish.Head[0], fish.Head[1], 5, 5);
             //graphics.DrawString(Convert.ToString(fish.Dx) + "  |  " + Convert.ToString(fish.ldx), new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
-            graphics.DrawString(fish.dInfo, new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
+            //graphics.DrawString(fish.dInfo, new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
             Pen p = new Pen(Color.Green, 2);
             graphics.DrawLine(p, (float)fish.Head[0], (float)fish.Head[1], (float)fish.Target[0], (float)fish.Target[1]);
         }
@@ -199,13 +197,20 @@ namespace FishAquarium
                     //if (ground.IsVisible(fish.PosX, fish.PosY))
                     //listBox1.Items.Add("Yes");
                     graphics.DrawImage(fish.Sprite, fish.Body);
+
                     if (fish.Type != "Worm" && fish.Type != "Die")
                     {
-                        Debug(fish);
-                        //graphics.DrawString(Convert.ToString(fish.Energy), drawFont, drawBrush, fish.PosX, fish.PosY);
+                        //Debug(fish);
+                        graphics.DrawString(Convert.ToString(fish.Energy), drawFont, drawBrush, fish.PosX, fish.PosY);
                     }
+                    if (fish.Type == "Pred")
+                    {
+                        //graphics.FillRectangle(Brushes.Black, fish.Head[0] - fish.Body.Height / 2, fish.Head[1] - fish.Body.Height / 2, fish.Body.Height, fish.Body.Height);
+                        //fish.Head[0] - fish.Body.Width / 4, fish.Head[1] - fish.Body.Width / 4, fish.Body.Width / 2, fish.Body.Width / 2
+                    }
+ 
+                    world.UpdateWorld(ref worldArr, fish, ref listBox1);
                 }
-                world.UpdateWorld(ref worldArr, fish, ref listBox1);
             }
 
             fieldPB.Refresh();
@@ -263,7 +268,7 @@ namespace FishAquarium
                 var x = e.Location.X;
                 var y = e.Location.Y;
                 var validationPassed = ValidateMousePosition(x, y, 'l');
-                Worm worm = new Worm(x, y, Bitmaps.GetRow(3), random);
+                Worm worm = new Worm(x, y, Bitmaps.GetRow(3), 25, 25, random);
                 if (validationPassed && !World.CheckCollisionFromAllSides(worldArr, worm))
                     worldArr.Add(worm);
             }

@@ -16,11 +16,6 @@ namespace FishAquarium
         public delegate void MethodContainer();
         public event MethodContainer onCount;
 
-        public World()
-        {
-            random = new Random();
-        }
-
         public World(int width, int height)
         {
             this.Width = width;
@@ -57,7 +52,7 @@ namespace FishAquarium
             Rectangle actRect = new Rectangle(fish.PosX + fish.Dx * fish.Speed, fish.PosY + fish.Dy * fish.Speed, fish.Body.Width, fish.Body.Height);
             foreach (Entity obj in worldArr)
             {
-                if (obj != fish && obj.Type != "Worm" && obj.Body.IntersectsWith(actRect))
+                if (obj != fish && obj.Type != "Worm" && obj.Type != "Die" && obj.Body.IntersectsWith(actRect))
                 {
                     if (fish.Dx > 0)
                         collSide.Add('r');
@@ -83,7 +78,7 @@ namespace FishAquarium
 
         public void ChooseDir(Entity fish)
         {
-            fish.Dx = 0;
+            //fish.Dx = 0;
             fish.Dy = 0;
 
             if (fish.Target[0] > fish.Head[0])
@@ -127,10 +122,7 @@ namespace FishAquarium
             else
             {
                 if (collSide.Contains('l') || collSide.Contains('r'))
-                {
                     fish.Dx *= -1;
-                    //onCount += fish.FishChangeDir;
-                }
                 if (collSide.Contains('b') || collSide.Contains('t'))
                     fish.Dy *= -1;
 
@@ -149,7 +141,7 @@ namespace FishAquarium
             int Dx = random.Next(-1, 2);
             int Dy = random.Next(-1, 2);
             int stepX = random.Next(200, 400);
-            int stepY = random.Next(50, 100);
+            int stepY = random.Next(200, 400);//50/100
             int[] target = new int[2];
 
             target[0] = (fish.Head[0] + Dx * stepX + Width - fish.Body.Width) % (Width - fish.Body.Width);
@@ -159,24 +151,34 @@ namespace FishAquarium
 
         private void TargetLimiter(Entity fish, int[] lastMove)
         {
-            int[,] newTL = new int[4, 2];
-            for (int i = 0; i < 3; i++)
+            int[,] newTL = new int[8, 2];
+            for (int i = 0; i < 7; i++)
             {
                 newTL[i, 0] = fish.TargetLimiter[i + 1, 0];
                 newTL[i, 1] = fish.TargetLimiter[i + 1, 1];
             }
-            newTL[3, 0] = lastMove[0];
-            newTL[3, 1] = lastMove[1];
+            newTL[7, 0] = lastMove[0];
+            newTL[7, 1] = lastMove[1];
             fish.TargetLimiter = newTL;
         }
 
         private void TargetLimiter(Entity fish)
         {
-            if (fish.TargetLimiter[0, 0] == fish.TargetLimiter[2, 0] && fish.TargetLimiter[0, 1] == fish.TargetLimiter[2, 1] && fish.TargetLimiter[1, 0] == fish.TargetLimiter[3, 0] && fish.TargetLimiter[1, 1] == fish.TargetLimiter[3, 1])
+            //if (fish.TargetLimiter[0, 0] == fish.TargetLimiter[2, 0] && fish.TargetLimiter[0, 1] == fish.TargetLimiter[2, 1] && fish.TargetLimiter[1, 0] == fish.TargetLimiter[3, 0] && fish.TargetLimiter[1, 1] == fish.TargetLimiter[3, 1])
+                //GetTarget(fish);
+            int overtaps = 0; // Совпадений
+            for (int i = 0; i < fish.TargetLimiter.Length / 4; i++)
+            {
+                if (fish.TargetLimiter[i, 0] == fish.TargetLimiter[i + 2, 0] && fish.TargetLimiter[i, 1] == fish.TargetLimiter[i + 2, 1])
+                {
+                    overtaps++;
+                }
+            }
+            if (overtaps >= 4)
                 GetTarget(fish);
         }
 
-        public List<Entity> FishOverview(Entity thisFish, List<Entity> worldArr)
+        public List<Entity> FishOverview(List<Entity> worldArr, Entity thisFish)
         {
             List<Entity> sight = new List<Entity>();
 
@@ -230,7 +232,7 @@ namespace FishAquarium
                 fish.Target[0] = sight[maxI].PosX + sight[maxI].Body.Width / 2;
                 fish.Target[1] = sight[maxI].PosY + sight[maxI].Body.Height / 2;
             }
-            else if (fish.Type == "Herb" && sight[maxI].Type != "Herb")
+            else if (fish.Type == "Herb" && sight[maxI].Type != "Herb" && sight[maxI].Type != "Die")
             {
                 if (isPred)
                 {
@@ -240,8 +242,8 @@ namespace FishAquarium
 
                     foreach (Entity enemy in predList)
                     {
-                        int enX = sight[maxI].PosX + sight[maxI].Body.Width / 2;
-                        int enY = sight[maxI].PosY + sight[maxI].Body.Height / 2;
+                        int enX = enemy.PosX + enemy.Body.Width / 2;
+                        int enY = enemy.PosY + enemy.Body.Height / 2;
                         int thisX = fish.PosX + fish.Body.Width / 2;
                         int thisY = fish.PosY + fish.Body.Height / 2;
                         double vecX = Math.Pow(enX - thisX, 2);
@@ -265,12 +267,12 @@ namespace FishAquarium
                         else if ((int)cautionVecX * fish.Dx <= 0)
                             targetX = 0;
                         else
-                            targetX = (int)cautionVecX * fish.Dx;
+                            targetX = (int)cautionVecX;//* fish.Dx;
 
                         if((int)cautionVecY * fish.Dy >= Height)
-                            targetY = Height;
+                            targetY = Height - fish.Body.Height;
                         else if ((int)cautionVecY * fish.Dy <= 0)
-                            targetY = 0;
+                            targetY = 0 + fish.Body.Height;
                         else
                             targetY = (int)cautionVecY * fish.Dy;
 
@@ -286,25 +288,30 @@ namespace FishAquarium
             }
         }
 
-        public bool CheckFishEat(Entity fish, List<Entity> worldArr)
+        public void CheckFishEat(List<Entity> worldArr, Entity fish)
         {
-            Rectangle actRect = new Rectangle(fish.PosX + fish.Dx * fish.Speed, fish.PosY + fish.Dy * fish.Speed, fish.Body.Width, fish.Body.Height);
             foreach (Entity obj in worldArr)
             {
-                if (fish.Type == "Herb" && obj.Type == "Worm" && obj.Body.IntersectsWith(actRect))
+                if (obj.Type == "Worm" && obj.Body.IntersectsWith(fish.Body))
                 {
                     fish.Energy += obj.GiveEnergy;
-                    worldArr.Remove(obj);
-                    return true;
+                    obj.Destroy();
                 }
-                else if (fish.Type == "Pred" && (obj.Type == "Herb" || obj.Type == "Worm") && obj != fish && obj.Body.IntersectsWith(actRect))
+                else if (fish.Type == "Pred" && obj.Type == "Die" && obj.Body.IntersectsWith(fish.Body))
                 {
                     fish.Energy += obj.GiveEnergy;
-                    worldArr.Remove(obj);
-                    return true;
+                    obj.Destroy();
+                }
+                else if (fish.Energy <= 30 && fish.Type == "Pred" && obj.Type == "Herb" && obj != fish)
+                {
+                    Rectangle actRect = new Rectangle(fish.Head[0] - fish.Body.Height / 2, fish.Head[1] - fish.Body.Height / 2, fish.Body.Height, fish.Body.Height);
+                    if (obj.Body.IntersectsWith(actRect))
+                    {
+                        fish.Energy += obj.GiveEnergy;
+                        obj.Destroy();
+                    }
                 }
             }
-            return false;
         }
 
         public void UpdateWorld(ref List<Entity> worldArr, Entity obj, ref ListBox lb)
@@ -318,9 +325,9 @@ namespace FishAquarium
                 return;
             }
 
-            if (FishOverview(obj, worldArr).Count != 0)
+            if (FishOverview(worldArr, obj).Count != 0)
             {
-                ViewAnalys(obj, FishOverview(obj, worldArr));
+                ViewAnalys(obj, FishOverview(worldArr, obj));
             }
             else
             {
@@ -330,6 +337,7 @@ namespace FishAquarium
                   //  GetTarget(obj);
             }
 
+            CheckFishEat(worldArr, obj);
             PrepareFishMove(worldArr, obj);
             TargetLimiter(obj);
 

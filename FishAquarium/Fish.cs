@@ -21,6 +21,7 @@ namespace FishAquarium
         public string Type { get; set; }
         public int[] Head { get; set; }
         public double Сaution { get; set; }
+        public int ViewRadiusPar { get; set; }
         public int PosX { get; set; }
         public int PosY { get; set; }
         public int[] Target { get; set; }
@@ -33,7 +34,6 @@ namespace FishAquarium
         Random random;
 
         public Dictionary<string, double> Weights { get; set; }
-        public double[] LayerOdds { get; set; } // Коэффициенты слоёв
 
         public Entity(int posX, int posY, Bitmap[] sprite)
         {
@@ -44,7 +44,7 @@ namespace FishAquarium
             Head = new int[] { PosX, PosY + Body.Height };
             State = true;
             Target = new int[] { PosX, PosY };
-            TargetLimiter = new int[4, 2];
+            TargetLimiter = new int[8, 2];
             aliveLeftSprite = sprite[0];
             aliveRightSprite = sprite[2];
             deadSprite = sprite[1];
@@ -66,12 +66,10 @@ namespace FishAquarium
         {
             PosX += OptSpeedX * Dx;
             PosY += OptSpeedY * Dy;
-            //Head[0] = PosX;
             Head[1] = PosY + Body.Height / 2;
             Body.X = PosX;
             Body.Y = PosY;
-            //if (Dx != ldx && Dx != 0)
-            //{
+
             if (Dx == -1)
             {
                 dInfo = "left";
@@ -84,66 +82,69 @@ namespace FishAquarium
                 Sprite = aliveRightSprite;
                 Head[0] = PosX + Body.Width;
             }
-            //fish.Sprite.RotateFlip(RotateFlipType.RotateNoneFlipX);
-            //ldx = Dx;
-            //}
             else
-            {
                 Head[0] = PosX;
-            }
+
             viewRadius.X = Head[0] - 50;
             viewRadius.Y = Head[1] - 50;
+        }
+
+        public void Destroy()
+        {
+            State = false;
+            Body = new Rectangle(-1, -1, 0, 0);
+            Sprite = null;
+            Head[0] = -1;
+            Head[1] = -1;
         }
     }
 
     class PredFish : Entity
     {
-        public PredFish(int posX, int posY, Bitmap[] sprite, Random random) : base(posX, posY, sprite)
+        public PredFish(int posX, int posY, Bitmap[] sprite, int width, int height, Random random) : base(posX, posY, sprite)
         {
             Type = "Pred";
-            Energy = 1000;
+            Energy = 120;
+            ViewRadiusPar = 70;
             //Color = Brushes.Red;
-            Speed = random.Next(5, 20);
-            Body = new Rectangle(posX, posY, 100, 30);
-            viewRadius = new Rectangle(posX - 50, posY - 50, 100, 100);
-            //LayerOdds = new double[] { 1, 0.6, 0.2, 0.1, 0.08, 0.2, 0.1, 0.05, 0.03, 0.005, 0.0002 };
+            Speed = random.Next(5, 15);
+            Body = new Rectangle(posX, posY, width, height);
+            viewRadius = new Rectangle(posX - ViewRadiusPar / 2, posY - ViewRadiusPar / 2, ViewRadiusPar, ViewRadiusPar);
             Weights = new Dictionary<string, double>
             {
                 ["Pred"] = 0,
                 ["Worm"] = 0.9,
                 ["Herb"] = 0.7,
-                ["Die"] = 0.5,
-                ["None"] = 0,
+                ["Die"] = 0.5
             };
         }
     }
 
     class HerbFish : Entity
     {
-        public HerbFish(int posX, int posY, Bitmap[] sprite, Random random) : base(posX, posY, sprite)
+        public HerbFish(int posX, int posY, Bitmap[] sprite, int width, int height, Random random) : base(posX, posY, sprite)
         {
-            Сaution = 100;
             Type = "Herb";
-            Energy = 1000;
+            Energy = 150;
+            ViewRadiusPar = 200;
             //Color = Brushes.Green;
-            Speed = random.Next(5, 20);
-            Body = new Rectangle(posX, posY, 60, 30);
-            viewRadius = new Rectangle(posX - 50, posY - 50, 100, 100);
-            //LayerOdds = new double[] { 1, 0.5, 0.2, 0.1, 0.08, 0.2, 0.1, 0.05, 0.03, 0.005, 0.0002 };
+            Speed = random.Next(10, 25);
+            Body = new Rectangle(posX, posY, width, height);
+            viewRadius = new Rectangle(posX - ViewRadiusPar / 2, posY - ViewRadiusPar / 2, ViewRadiusPar, ViewRadiusPar);
+            Сaution = 500;
             Weights = new Dictionary<string, double>
             {
                 ["Pred"] = 0.9,
                 ["Worm"] = 0.6,
                 ["Herb"] = 0,
-                ["Die"] = 0,
-                ["None"] = 0,
+                ["Die"] = 0
             };
         }
     }
 
     class Worm : Entity
     {
-        public Worm(int posX, int posY, Bitmap[] sprite, Random random) : base(posX, posY, sprite)
+        public Worm(int posX, int posY, Bitmap[] sprite, int width, int height, Random random) : base(posX, posY, sprite)
         {
             //Color = Brushes.Yellow;
             GiveEnergy = 10;
@@ -152,7 +153,7 @@ namespace FishAquarium
             Speed = random.Next(5, 15);
             Dx = 0;
             Dy = 1;
-            Body = new Rectangle(posX, posY, 25, 25);
+            Body = new Rectangle(posX, posY, width, height);
         }
     }
     class Weed : Entity

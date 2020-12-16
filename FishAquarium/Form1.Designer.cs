@@ -150,7 +150,7 @@
             this.ratioTB.Name = "ratioTB";
             this.ratioTB.Size = new System.Drawing.Size(136, 20);
             this.ratioTB.TabIndex = 1;
-            this.ratioTB.Text = "2/0";
+            this.ratioTB.Text = "7/7";
             this.ratioTB.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // stopBtn
@@ -404,7 +404,7 @@
             this.Controls.Add(this.splitContainer1);
             this.Name = "Form1";
             this.Text = "Form1";
-            this.WindowState = System.Windows.Forms.FormWindowState.Minimized;
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.Form1_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
