@@ -1,220 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Linq;
-using System.IO;
-using System.Reflection;
 using System.Windows.Forms;
 
 namespace FishAquarium
 {
     class World
     {
-        Random random;
-        GraphicsPath ground;
-        Graphics graphics;
-        List<Entity> worldArr;
-        PictureBox fieldPB;
-        string ratioText;
+        private Random random;
 
-        int[] ratio = new int[2];
+        private int Width { get; set; }
+        private int Height { get; set; }
 
-        readonly int MAX_FISH_WIDTH = 200;
-        readonly int MAX_FISH_HEIGHT = 100;
+        public delegate void MethodContainer();
+        public event MethodContainer onCount;
 
-        int bitmapsCount;
-        Bitmap[,] Bitmaps;
-
-        public int fishCount;
-        public int fishPredCount;
-        public int fishHerbCount;
-
-        public Font drawFont = new Font("Arial", 10);
-        public SolidBrush drawBrush = new SolidBrush(Color.White);
-
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-
-        public delegate void FishDie();
-        public event FishDie DieEvent;
-        ///public delegate void FishEat(List<Entity> worldArr);
-        ///public event FishEat EatEvent;
-
-        public World(int width, int height, PictureBox fieldPB, string ratioStr)
+        public World(int width, int height)
         {
-            Width = width;
-            Height = height;
-            this.fieldPB = fieldPB;
-            ratioText = ratioStr;
-        }
-
-        void LoadImages(string[,] usedBitmaps)
-        {
-            Bitmaps = new Bitmap[bitmapsCount, 3];
-
-            var appDir = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory()));
-            var fullPath = Path.Combine(appDir, @"src");
-            Bitmap[] image = new Bitmap[3];
-
-            for (int i = 0; i < bitmapsCount; i++)
-            {
-                image[0] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 0])));
-                image[1] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 1])));
-                image[2] = new Bitmap(Image.FromFile(Path.Combine(fullPath, usedBitmaps[i, 0])));
-                image[0].MakeTransparent(Color.FromArgb(255, 255, 255));
-                image[1].MakeTransparent(Color.FromArgb(255, 255, 255));
-                image[2].MakeTransparent(Color.FromArgb(255, 255, 255));
-                image[2].RotateFlip(RotateFlipType.RotateNoneFlipX);
-                Bitmaps[i, 0] = image[0];
-                Bitmaps[i, 1] = image[1];
-                Bitmaps[i, 2] = image[2];
-            }
-        }
-
-        void CreateGround()
-        {
-            ground = new GraphicsPath();
-            float[] X = { 0, 0, (float)(Width * 0.2), (float)(Width * 0.45), (float)(Width * 0.58), (float)(Width * 0.79), (float)(Width * 0.95), Width, Width };
-            float[] Y = { Height, Height * (float)0.75, Height * (float)0.95, Height * (float)0.85, Height * (float)0.9, Height - 10, Height * (float)0.9, Height * (float)0.75, Height };
-
-            PointF[] curvePoints = new PointF[Y.Length];
-            for (int i = 0; i < curvePoints.Length; i++)
-            {
-                PointF point = new PointF(X[i], Y[i]);
-                curvePoints[i] = point;
-            }
-
-            ground.AddClosedCurve(curvePoints);
-            ground.CloseAllFigures();
-        }
-
-        public void StartWorld()
-        {
-            string[,] usedBitmaps = new string[,]
-            {
-                {"okun.bmp", "okun_dead.bmp"},
-                {"chuka.bmp", "chuka_dead.bmp"},
-                {"fish_xz.bmp", "fish_xz_dead.bmp"},
-                {"worm.bmp", "worm.bmp"},
-            };
-
-            bitmapsCount = usedBitmaps.Length / 2;
-            LoadImages(usedBitmaps);
-
-            fishPredCount = 0;
-            fishHerbCount = 0;
-            
-            string[] ratioStr = ratioText.Split(new char[] { '/' });
-
-            int i = 0;
-            foreach (string s in ratioStr)
-            {
-                ratio[i] = Convert.ToInt32(s);
-                i++;
-            }
-
-            fishCount = ratio[0] + ratio[1];
-            worldArr = new List<Entity>();
-
-            fieldPB.Image = new Bitmap(fieldPB.Width, fieldPB.Height);
-            graphics = Graphics.FromImage(fieldPB.Image);
-            CreateGround();
-
+            this.Width = width;
+            this.Height = height;
             random = new Random();
-
-            i = 0;
-            int x, y;
-            int lastX = 0;
-            int lastY = 50;
-            while (i < ratio[0])
-            {
-                x = (lastX + Width + MAX_FISH_WIDTH) % Width;
-                y = lastY;
-                if (x + MAX_FISH_WIDTH >= Width)
-                    y = (y + MAX_FISH_HEIGHT + Height) % Height;
-                lastX = x;
-                lastY = y;
-                PredFish fish = new PredFish(x, y, Bitmaps.GetRow(1), this, 100, 30, random);
-                worldArr.Add(fish);
-                fishPredCount++;
-                i++;
-            }
-
-            while (i < fishCount)
-            {
-                x = (lastX + Width + MAX_FISH_WIDTH) % Width;
-                y = lastY;
-                if (x + MAX_FISH_WIDTH >= Width)
-                    y = (y + MAX_FISH_HEIGHT + Height) % Height;
-                lastX = x;
-                lastY = y;
-                HerbFish fish;
-                if (random.Next(2) == 0)
-                    fish = new HerbFish(x, y, Bitmaps.GetRow(0), this, 60, 30, random);
-                else
-                    fish = new HerbFish(x, y, Bitmaps.GetRow(2), this, 70, 35, random);
-                worldArr.Add(fish);
-                fishHerbCount++;
-                i++;
-            }
-            /*PredFish fish = new PredFish(100, 100, Bitmaps.GetRow(1), random);
-            worldArr.Add(fish);
-            HerbFish fishs = new HerbFish(200, 200, Bitmaps.GetRow(0), random);
-            worldArr.Add(fishs);
-            PredFish fishhh = new PredFish(300, 300, Bitmaps.GetRow(1), random);
-            worldArr.Add(fishhh);
-            HerbFish fishshh = new HerbFish(400, 400, Bitmaps.GetRow(0), random);
-            worldArr.Add(fishshh);*/
         }
 
-        void Debug(Entity fish)
+        public void FishCheckEvents(Entity fish)
         {
-            graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
-            graphics.FillRectangle(Brushes.Yellow, fish.Head[0], fish.Head[1], 5, 5);
-            //graphics.DrawString(Convert.ToString(fish.Dx) + "  |  " + Convert.ToString(fish.ldx), new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
-            //graphics.DrawString(fish.dInfo, new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
-            Pen p = new Pen(Color.Green, 2);
-            graphics.DrawLine(p, (float)fish.Head[0], (float)fish.Head[1], (float)fish.Target[0], (float)fish.Target[1]);
+            if (fish.Energy == 0)
+            {
+
+            }
         }
 
-        public void Upgrade()
+        // Определение коллизии со всех сторон объекта
+        public static bool CheckCollisionFromAllSides(List<Entity> worldArr, Entity fish)
         {
-            graphics.Clear(Color.FromArgb(0, Color.White));
+            Rectangle actRect = new Rectangle(fish.PosX, fish.PosY, fish.Body.Width, fish.Body.Height);
             foreach (Entity obj in worldArr)
             {
-                if (obj.State)
-                {
-                    //graphics.FillRectangle(Brushes.Blue, fish.viewRadius);
-                    Color cr = Color.FromArgb(43, 21, 8);
-                    SolidBrush sb = new SolidBrush(cr);
-                    graphics.FillPath(sb, ground);
-                    graphics.FillRectangle(obj.Color, obj.Body);
-                    graphics.DrawImage(obj.Sprite, obj.Body);
-
-                    if (obj.Type != "Worm" && obj.Type != "Die")
-                    {
-                        Debug(obj);
-                        graphics.DrawString(Convert.ToString(obj.Energy), drawFont, drawBrush, obj.PosX, obj.PosY);
-                    }
-
-                    obj.UpdateFish(ref worldArr);
-
-                    if (obj.Energy == 0)
-                        DieEvent += obj.FishDie;
-                }
-            }
-            DieEvent?.Invoke();
-
-            fieldPB.Refresh();
-        }
-
-        public bool CheckGroundColl(Rectangle obj)
-        {
-            int y = obj.Y + obj.Height;
-            for (int i = obj.X; i < obj.X + obj.Width; i++)
-            {
-                if (ground.IsVisible(i, y))
+                if (obj != fish && obj.Type != "Worm" && obj.Body.IntersectsWith(actRect))
                 {
                     return true;
                 }
@@ -222,81 +45,311 @@ namespace FishAquarium
             return false;
         }
 
-        public void FeedingFish(int x, int y)
+        // Определение коллизии со стороны движения объекта
+        public static List<char> CheckCollision(List<Entity> worldArr, Entity fish)
         {
-            var validationPassed = ValidateMousePosition(x, y, 'l');
-            Worm worm = new Worm(x, y, Bitmaps.GetRow(3), this, 25, 25, random);
-            if (validationPassed && !worm.CheckCollisionFromAllSides(worldArr))
-                worldArr.Add(worm);
+            List<char> collSide = new List<char>();
+            Rectangle actRect = new Rectangle(fish.PosX + fish.Dx * fish.Speed, fish.PosY + fish.Dy * fish.Speed, fish.Body.Width, fish.Body.Height);
+            foreach (Entity obj in worldArr)
+            {
+                if (obj != fish && obj.Type != "Worm" && obj.Type != "Die" && obj.Body.IntersectsWith(actRect))
+                {
+                    if (fish.Dx > 0)
+                        collSide.Add('r');
+                    else if (fish.Dx < 0)
+                        collSide.Add('l');
+
+                    if (fish.Dy > 0)
+                        collSide.Add('b');
+                    else if (fish.Dy < 0)
+                        collSide.Add('t');
+                }
+            }
+            return collSide;
         }
 
-        public void DeleteEntity(int x, int y)
+        public bool CheckBorders(Entity fobj)
         {
-            var validationPassed = ValidateMousePosition(x, y);
+            Rectangle obj = new Rectangle(fobj.PosX + fobj.Dx * fobj.Speed, fobj.PosY + fobj.Dy * fobj.Speed, fobj.Body.Width, fobj.Body.Height);
+            if (obj.Top > 0 && obj.Bottom < Height && obj.Left > 0 && obj.Right < Width)
+                return true;
+            return false;
+        }
 
-            if (validationPassed)
+        public void ChooseDir(Entity fish)
+        {
+            //fish.Dx = 0;
+            fish.Dy = 0;
+
+            if (fish.Target[0] > fish.Head[0])
             {
-                foreach (Entity fish in worldArr)
+                if (Math.Abs(fish.Target[0] - fish.Head[0]) >= fish.Body.Width || fish.Target[1] == fish.Head[1])
+                    fish.Dx = 1;
+            }
+            else if (fish.Target[0] < fish.Head[0])
+            {
+                if (Math.Abs(fish.Target[0] - fish.Head[0]) >= fish.Body.Width || fish.Target[1] == fish.Head[1])
+                    fish.Dx = -1;
+            }
+
+            if (fish.Target[1] > fish.Head[1])
+                fish.Dy = 1;
+            else if (fish.Target[1] < fish.Head[1])
+                fish.Dy = -1;
+        }
+
+        public void PrepareFishMove(List<Entity> worldArr, Entity fish)
+        {
+            int OptSpeedX = Math.Min(Math.Abs(fish.Target[0] - fish.Head[0]), fish.Speed);
+            int OptSpeedY = Math.Min(Math.Abs(fish.Target[1] - fish.Head[1]), fish.Speed);
+
+            if (OptSpeedX == 0)
+                OptSpeedX = fish.Speed;
+
+            if (OptSpeedY == 0)
+                OptSpeedY = fish.Speed;
+
+            ChooseDir(fish);
+
+            int[] points = new int[] { fish.PosX + OptSpeedX * fish.Dx, fish.PosY + OptSpeedY * fish.Dy };
+
+            List<char> collSide = CheckCollision(worldArr, fish);
+            if (collSide.Count == 0)
+            {
+                fish.FishMove(OptSpeedX, OptSpeedY);
+                TargetLimiter(fish, points);
+            }
+            else
+            {
+                if (collSide.Contains('l') || collSide.Contains('r'))
+                    fish.Dx *= -1;
+                if (collSide.Contains('b') || collSide.Contains('t'))
+                    fish.Dy *= -1;
+
+                collSide = CheckCollision(worldArr, fish);
+                if (collSide.Count == 0 && CheckBorders(fish))
                 {
-                    if (fish.Body.Contains(x, y))
+                    fish.FishMove(OptSpeedX, OptSpeedY);
+                    TargetLimiter(fish, points);
+                }
+            }
+        }
+
+        private void GetTarget(Entity fish)
+        {
+            //fish.ldx = fish.Dx;
+            int Dx = random.Next(-1, 2);
+            int Dy = random.Next(-1, 2);
+            int stepX = random.Next(200, 400);
+            int stepY = random.Next(200, 400);//50/100
+            int[] target = new int[2];
+
+            target[0] = (fish.Head[0] + Dx * stepX + Width - fish.Body.Width) % (Width - fish.Body.Width);
+            target[1] = (fish.Head[1] + Dy * stepY + Height - fish.Body.Height) % (Height - fish.Body.Height);
+            fish.Target = target;
+        }
+
+        private void TargetLimiter(Entity fish, int[] lastMove)
+        {
+            int[,] newTL = new int[8, 2];
+            for (int i = 0; i < 7; i++)
+            {
+                newTL[i, 0] = fish.TargetLimiter[i + 1, 0];
+                newTL[i, 1] = fish.TargetLimiter[i + 1, 1];
+            }
+            newTL[7, 0] = lastMove[0];
+            newTL[7, 1] = lastMove[1];
+            fish.TargetLimiter = newTL;
+        }
+
+        private void TargetLimiter(Entity fish)
+        {
+            //if (fish.TargetLimiter[0, 0] == fish.TargetLimiter[2, 0] && fish.TargetLimiter[0, 1] == fish.TargetLimiter[2, 1] && fish.TargetLimiter[1, 0] == fish.TargetLimiter[3, 0] && fish.TargetLimiter[1, 1] == fish.TargetLimiter[3, 1])
+                //GetTarget(fish);
+            int overtaps = 0; // Совпадений
+            for (int i = 0; i < fish.TargetLimiter.Length / 4; i++)
+            {
+                if (fish.TargetLimiter[i, 0] == fish.TargetLimiter[i + 2, 0] && fish.TargetLimiter[i, 1] == fish.TargetLimiter[i + 2, 1])
+                {
+                    overtaps++;
+                }
+            }
+            if (overtaps >= 4)
+                GetTarget(fish);
+        }
+
+        public List<Entity> FishOverview(List<Entity> worldArr, Entity thisFish)
+        {
+            List<Entity> sight = new List<Entity>();
+
+            foreach (Entity fish in worldArr)
+            {
+                if (fish != thisFish && thisFish.viewRadius.IntersectsWith(fish.Body))
+                {
+                    sight.Add(fish);
+                }
+            }
+
+            return sight;
+        }
+
+        public static int MaxListInd(List<double> list)
+        {
+            int maxI = 0;
+            double maxEl = list[0];
+            for (int i = 1; i < list.Count; i++)
+            {
+                if (list[i] > maxEl)
+                {
+                    maxEl = list[i];
+                    maxI = i;
+                }
+            }
+
+            return maxI;
+        }
+
+        public void ViewAnalys(Entity fish, List<Entity> sight)
+        {
+            List<double> pref = new List<double>();
+            bool isPred = false;
+            List<Entity> predList = new List<Entity>();
+
+            foreach (Entity obj in sight)
+            {
+                pref.Add(fish.Weights[obj.Type]);
+                isPred = obj.Type == "Pred";
+                if (obj.Type == "Pred")
+                {
+                    predList.Add(obj);
+                }
+            }
+
+            int maxI = MaxListInd(pref);
+
+            if (fish.Type == "Pred" && sight[maxI].Type != "Pred")
+            {
+                fish.Target[0] = sight[maxI].PosX + sight[maxI].Body.Width / 2;
+                fish.Target[1] = sight[maxI].PosY + sight[maxI].Body.Height / 2;
+            }
+            else if (fish.Type == "Herb" && sight[maxI].Type != "Herb" && sight[maxI].Type != "Die")
+            {
+                if (isPred)
+                {
+                    double minDistToEnemy = 9999999;
+                    double cautionVecX = 0;
+                    double cautionVecY = 0;
+
+                    foreach (Entity enemy in predList)
                     {
-                        worldArr.Remove(fish);
-                        return;
+                        int enX = enemy.PosX + enemy.Body.Width / 2;
+                        int enY = enemy.PosY + enemy.Body.Height / 2;
+                        int thisX = fish.PosX + fish.Body.Width / 2;
+                        int thisY = fish.PosY + fish.Body.Height / 2;
+                        double vecX = Math.Pow(enX - thisX, 2);
+                        double vecY = Math.Pow(enY - thisY, 2);
+                        double distance = Math.Sqrt(vecX + vecY);
+
+                        if (distance < fish.Сaution && distance < minDistToEnemy)
+                        {
+                            minDistToEnemy = distance;
+                            cautionVecX = thisX - enX + thisX;
+                            cautionVecY = thisY - enY + thisY;
+                        }
+                    }
+
+                    if (minDistToEnemy != 9999999)
+                    {
+                        int targetX;
+                        int targetY;
+                        if ((int)cautionVecX * fish.Dx >= Width)
+                            targetX = Width;
+                        else if ((int)cautionVecX * fish.Dx <= 0)
+                            targetX = 0;
+                        else
+                            targetX = (int)cautionVecX;//* fish.Dx;
+
+                        if((int)cautionVecY * fish.Dy >= Height)
+                            targetY = Height - fish.Body.Height;
+                        else if ((int)cautionVecY * fish.Dy <= 0)
+                            targetY = 0 + fish.Body.Height;
+                        else
+                            targetY = (int)cautionVecY * fish.Dy;
+
+                        fish.Target[0] = (targetX);
+                        fish.Target[1] = (targetY);
+                    }
+                }
+                else
+                {
+                    fish.Target[0] = sight[maxI].PosX + sight[maxI].Body.Width / 2;
+                    fish.Target[1] = sight[maxI].PosY + sight[maxI].Body.Height / 2;
+                }
+            }
+        }
+
+        public void CheckFishEat(List<Entity> worldArr, Entity fish)
+        {
+            foreach (Entity obj in worldArr)
+            {
+                if (obj.Type == "Worm" && obj.Body.IntersectsWith(fish.Body))
+                {
+                    fish.Energy += obj.GiveEnergy;
+                    obj.Destroy();
+                }
+                else if (fish.Type == "Pred" && obj.Type == "Die" && obj.Body.IntersectsWith(fish.Body))
+                {
+                    fish.Energy += obj.GiveEnergy;
+                    obj.Destroy();
+                }
+                else if (fish.Energy <= 30 && fish.Type == "Pred" && obj.Type == "Herb" && obj != fish)
+                {
+                    Rectangle actRect = new Rectangle(fish.Head[0] - fish.Body.Height / 2, fish.Head[1] - fish.Body.Height / 2, fish.Body.Height, fish.Body.Height);
+                    if (obj.Body.IntersectsWith(actRect))
+                    {
+                        fish.Energy += obj.GiveEnergy;
+                        obj.Destroy();
                     }
                 }
             }
         }
 
-        bool ValidateMousePosition(int x, int y)
-        {
-            return x >= 0 && y >= 0 && x < Width && y < Height;
-        }
-
-        bool ValidateMousePosition(int x, int y, char l)
-        {
-            return x >= 0 && y >= 0 && x < Width - 50 && y < Height - 50;
-        }
-
-
-        /*public void UpdateWorld(ref List<Entity> worldArr, Entity obj)
+        public void UpdateWorld(ref List<Entity> worldArr, Entity obj, ref ListBox lb)
         {
             if (obj.Type == "Worm" || obj.Type == "Die")
             {
-                Rectangle actRect = new Rectangle(obj.PosX + obj.Dx * obj.Speed, obj.PosY + obj.Dy * obj.Speed, obj.Body.Width, obj.Body.Height);
-                if (CheckBorders(obj) && !CheckGroundColl(actRect))//CheckCollision(worldArr, obj).Count == 0 &&
+                if (CheckBorders(obj))//CheckCollision(worldArr, obj).Count == 0 &&
                 {
                     obj.FishMove(obj.Speed, obj.Speed);
                 }
                 return;
             }
 
-            ///if (FishOverview(worldArr, obj).Count != 0)
-            ///{
-                ///ViewAnalys(obj, FishOverview(worldArr, obj));
-            ///}
-            ///else
-            ///{
-                ///if (obj.Body.Contains(obj.Target[0], obj.Target[1]))
-                    ///GetTarget(obj);
+            if (FishOverview(worldArr, obj).Count != 0)
+            {
+                ViewAnalys(obj, FishOverview(worldArr, obj));
+            }
+            else
+            {
+                if (obj.Body.Contains(obj.Target[0], obj.Target[1]))
+                    GetTarget(obj);
                 //if (obj.Target[0] == obj.Head[0] && obj.Target[1] == obj.Head[1])
                   //  GetTarget(obj);
-            ///}
+            }
 
-            EatEvent += obj.FishEat;
-            EatEvent?.Invoke(worldArr);
-
-            ///PrepareFishMove(worldArr, obj);
-            ///TargetLimiter(obj);
+            CheckFishEat(worldArr, obj);
+            PrepareFishMove(worldArr, obj);
+            TargetLimiter(obj);
 
             obj.Energy -= 0.5;
 
             if (obj.Energy == 0)
-                DieEvent += obj.FishDie;
+                onCount += obj.FishDie;
 
             //onCount += worldArr[i].FishMove;
 
-            DieEvent?.Invoke();
-        }*/
+            onCount?.Invoke();
+        }
     }
 
     public static class ArrayExtensions
