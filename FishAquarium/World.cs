@@ -2,20 +2,24 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
 using System.IO;
-using System.Reflection;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace FishAquarium
 {
-    class World
+    public delegate void FishDie(Entity obj);
+    public delegate void FishSteal(Entity obj);
+    public class World
     {
         Random random;
         GraphicsPath ground;
         Graphics graphics;
         List<Entity> worldArr;
         PictureBox fieldPB;
+        Cat cat;
+        Cleaner cleaner;
+
         string ratioText;
 
         int[] ratio = new int[2];
@@ -36,17 +40,13 @@ namespace FishAquarium
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public delegate void FishDie();
-        public event FishDie DieEvent;
-        ///public delegate void FishEat(List<Entity> worldArr);
-        ///public event FishEat EatEvent;
-
         public World(int width, int height, PictureBox fieldPB, string ratioStr)
         {
             Width = width;
             Height = height;
             this.fieldPB = fieldPB;
             ratioText = ratioStr;
+            random = new Random();
         }
 
         void LoadImages(string[,] usedBitmaps)
@@ -97,6 +97,8 @@ namespace FishAquarium
                 {"chuka.bmp", "chuka_dead.bmp"},
                 {"fish_xz.bmp", "fish_xz_dead.bmp"},
                 {"worm.bmp", "worm.bmp"},
+                {"cat.bmp", "cat.bmp"},
+                {"cleaner.bmp", "cleaner.bmp"}
             };
 
             bitmapsCount = usedBitmaps.Length / 2;
@@ -104,7 +106,7 @@ namespace FishAquarium
 
             fishPredCount = 0;
             fishHerbCount = 0;
-            
+
             string[] ratioStr = ratioText.Split(new char[] { '/' });
 
             int i = 0;
@@ -123,6 +125,9 @@ namespace FishAquarium
 
             random = new Random();
 
+            cat = new Cat(Bitmaps.GetRow(4)[0], random);
+            cleaner = new Cleaner(Bitmaps.GetRow(5)[0], random);
+
             i = 0;
             int x, y;
             int lastX = 0;
@@ -137,6 +142,8 @@ namespace FishAquarium
                 lastY = y;
                 PredFish fish = new PredFish(x, y, Bitmaps.GetRow(1), this, 100, 30, random);
                 worldArr.Add(fish);
+                fish.DieEvent += cleaner.FishDied;
+                fish.OnTheSurface += cat.Stealing;
                 fishPredCount++;
                 i++;
             }
@@ -155,9 +162,12 @@ namespace FishAquarium
                 else
                     fish = new HerbFish(x, y, Bitmaps.GetRow(2), this, 70, 35, random);
                 worldArr.Add(fish);
+                fish.DieEvent += cleaner.FishDied;
+                fish.OnTheSurface += cat.Stealing;
                 fishHerbCount++;
                 i++;
             }
+
             /*PredFish fish = new PredFish(100, 100, Bitmaps.GetRow(1), random);
             worldArr.Add(fish);
             HerbFish fishs = new HerbFish(200, 200, Bitmaps.GetRow(0), random);
@@ -185,27 +195,25 @@ namespace FishAquarium
             {
                 if (obj.State)
                 {
-                    //graphics.FillRectangle(Brushes.Blue, fish.viewRadius);
                     Color cr = Color.FromArgb(43, 21, 8);
                     SolidBrush sb = new SolidBrush(cr);
                     graphics.FillPath(sb, ground);
                     graphics.FillRectangle(obj.Color, obj.Body);
                     graphics.DrawImage(obj.Sprite, obj.Body);
+                    graphics.DrawImage(cleaner.cleanerBitmap, cleaner.cleanerRect);
+                    graphics.DrawImage(cat.catBitmap, cat.catRect);
 
-                    if (obj.Type != "Worm" && obj.Type != "Die")
+                    if (obj.Type != "Worm" && obj.Type != "Die") //&& obj != StealedFish)
                     {
-                        Debug(obj);
+                        //Debug(obj);
                         graphics.DrawString(Convert.ToString(obj.Energy), drawFont, drawBrush, obj.PosX, obj.PosY);
                     }
 
                     obj.UpdateFish(ref worldArr);
-
-                    if (obj.Energy == 0)
-                        DieEvent += obj.FishDie;
                 }
             }
-            DieEvent?.Invoke();
-
+            cleaner.CleaningProc();
+            cat.StealingProc();
             fieldPB.Refresh();
         }
 
@@ -256,47 +264,6 @@ namespace FishAquarium
         {
             return x >= 0 && y >= 0 && x < Width - 50 && y < Height - 50;
         }
-
-
-        /*public void UpdateWorld(ref List<Entity> worldArr, Entity obj)
-        {
-            if (obj.Type == "Worm" || obj.Type == "Die")
-            {
-                Rectangle actRect = new Rectangle(obj.PosX + obj.Dx * obj.Speed, obj.PosY + obj.Dy * obj.Speed, obj.Body.Width, obj.Body.Height);
-                if (CheckBorders(obj) && !CheckGroundColl(actRect))//CheckCollision(worldArr, obj).Count == 0 &&
-                {
-                    obj.FishMove(obj.Speed, obj.Speed);
-                }
-                return;
-            }
-
-            ///if (FishOverview(worldArr, obj).Count != 0)
-            ///{
-                ///ViewAnalys(obj, FishOverview(worldArr, obj));
-            ///}
-            ///else
-            ///{
-                ///if (obj.Body.Contains(obj.Target[0], obj.Target[1]))
-                    ///GetTarget(obj);
-                //if (obj.Target[0] == obj.Head[0] && obj.Target[1] == obj.Head[1])
-                  //  GetTarget(obj);
-            ///}
-
-            EatEvent += obj.FishEat;
-            EatEvent?.Invoke(worldArr);
-
-            ///PrepareFishMove(worldArr, obj);
-            ///TargetLimiter(obj);
-
-            obj.Energy -= 0.5;
-
-            if (obj.Energy == 0)
-                DieEvent += obj.FishDie;
-
-            //onCount += worldArr[i].FishMove;
-
-            DieEvent?.Invoke();
-        }*/
     }
 
     public static class ArrayExtensions

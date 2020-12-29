@@ -8,7 +8,6 @@ namespace FishAquarium
 {
     public partial class Form1 : Form
     {
-        Graphics graphics;
         World world;
         int currentGen = 0;
 

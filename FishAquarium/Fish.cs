@@ -4,33 +4,22 @@ using System.Drawing;
 
 namespace FishAquarium
 {
-    abstract class Entity
+    public abstract class Entity
     {
         protected Rectangle viewRadius;
-        protected Rectangle body;
-        public Rectangle Body 
-        {
-            get
-            {
-                return body;
-            }
-            protected set
-            {
-                body = value;
-            }
-        }
+        public Rectangle Body;
+
         public Bitmap Sprite { get; protected set; }
         protected Bitmap deadSprite;
         protected Bitmap aliveLeftSprite;
         protected Bitmap aliveRightSprite;
-        public string dInfo;
         protected int hunger;
 
         public Brush Color { get; private protected set; }
-        public bool State { get; private set; } //жива или мертва
+        public bool State { get; private protected set; } //жива или мертва
         public double Energy { get; private protected set; }
         public int Speed { get; private protected set; }
-        public double GiveEnergy { get; protected set; }
+        public double GiveEnergy { get; private protected set; }
         public string Type { get; private protected set; }
         public int[] Head { get; private protected set; }
         public double Сaution { get; private protected set; }
@@ -51,7 +40,6 @@ namespace FishAquarium
         public Entity(int posX, int posY, Bitmap[] sprite, World world)
         {
             this.world = world;
-            dInfo = "left";
             PosX = posX;
             PosY = posY;
             Head = new int[] { PosX, PosY + Body.Height };
@@ -69,10 +57,16 @@ namespace FishAquarium
         public void FishDie()
         {
             if (Type == "Herb")
+            {
+                world.fishCount--;
                 world.fishHerbCount--;
+            }
             else if (Type == "Pred")
+            {
+                world.fishCount--;
                 world.fishPredCount--;
-            world.fishCount--;
+            }
+
             //Color = Brushes.Gray;
             Sprite = deadSprite;
             GiveEnergy = 10;
@@ -160,18 +154,16 @@ namespace FishAquarium
             PosX += OptSpeedX * Dx;
             PosY += OptSpeedY * Dy;
             Head[1] = PosY + Body.Height / 2;
-            body.X = PosX;
-            body.Y = PosY;
+            Body.X = PosX;
+            Body.Y = PosY;
 
             if (Dx == -1)
             {
-                dInfo = "left";
                 Sprite = aliveLeftSprite;
                 Head[0] = PosX;
             }
             else if (Dx == 1)
             {
-                dInfo = "right";
                 Sprite = aliveRightSprite;
                 Head[0] = PosX + Body.Width;
             }
@@ -194,11 +186,8 @@ namespace FishAquarium
             }
         }
 
-        protected internal void Destroy()
+        protected virtual internal void Destroy()
         {
-            if (Type == "Herb")
-                world.fishHerbCount--;
-            world.fishCount--;
             State = false;
             Body = new Rectangle(-1, -1, 0, 0);
             Sprite = null;
@@ -277,8 +266,6 @@ namespace FishAquarium
 
         private protected void TargetLimiter()
         {
-            //if (fish.TargetLimiter[0, 0] == fish.TargetLimiter[2, 0] && fish.TargetLimiter[0, 1] == fish.TargetLimiter[2, 1] && fish.TargetLimiter[1, 0] == fish.TargetLimiter[3, 0] && fish.TargetLimiter[1, 1] == fish.TargetLimiter[3, 1])
-            //GetTarget(fish);
             int overtaps = 0; // Совпадений
             for (int i = 0; i < TargetLimiterCont.Length / 4; i++)
             {
@@ -322,23 +309,23 @@ namespace FishAquarium
             return maxI;
         }
 
-        private protected virtual void ViewAnalys(List<Entity> sight)
+        public abstract void UpdateFish(ref List<Entity> worldArr);
+
+        public void StealFish(int Y)
         {
-
-        }
-
-        public virtual void UpdateFish(ref List<Entity> worldArr)
-        {
-
+            PosY = Y - Body.Height;
+            Body.Y = PosY;
         }
     }
 
     class PredFish : Entity
     {
+        public event FishDie DieEvent;
+        public event FishSteal OnTheSurface;
         public PredFish(int posX, int posY, Bitmap[] sprite, World world, int width, int height, Random random) : base(posX, posY, sprite, world)
         {
             Type = "Pred";
-            Energy = 7;
+            Energy = 70;
             ViewRadiusPar = 100;
             hunger = 30;//100
             //Color = Brushes.Red;
@@ -350,8 +337,9 @@ namespace FishAquarium
                 ["Pred"] = 0,
                 ["Worm"] = 0.9,
                 ["Herb"] = 0.7,
-                ["Die"] = 0.5
-            };
+                ["Die"] = 0.5,
+                ["Stealed"] = 0
+        };
         }
 
         private protected override void FishEat(List<Entity> worldArr)
@@ -363,7 +351,7 @@ namespace FishAquarium
                     Energy += obj.GiveEnergy;
                     obj.Destroy();
                 }
-                else if (Type == "Pred" && obj.Type == "Die" && obj.Body.IntersectsWith(Body))
+                else if (obj.Type == "Die" && obj.Body.IntersectsWith(Body))
                 {
                     Energy += obj.GiveEnergy;
                     obj.Destroy();
@@ -380,7 +368,18 @@ namespace FishAquarium
             }
         }
 
-        private protected override void ViewAnalys(List<Entity> sight)
+        protected override internal void Destroy()
+        {
+            world.fishPredCount--;
+            world.fishCount--;
+            State = false;
+            Body = new Rectangle(-1, -1, 0, 0);
+            Sprite = null;
+            Head[0] = -1;
+            Head[1] = -1;
+        }
+
+        private protected void ViewAnalys(List<Entity> sight)
         {
             List<double> pref = new List<double>();
 
@@ -407,6 +406,10 @@ namespace FishAquarium
         {
             if (Type == "Die")
             {
+                if (PosY < 20)
+                {
+                    DieEvent(this);
+                }
                 Rectangle actRect = new Rectangle(PosX + Dx * Speed, PosY + Dy * Speed, Body.Width, Body.Height);
                 if (CheckBorders() && !world.CheckGroundColl(actRect))//CheckCollision(worldArr, obj).Count == 0 &&
                 {
@@ -432,12 +435,24 @@ namespace FishAquarium
             PrepareFishMove(worldArr);
             TargetLimiter();
 
-            Energy -= 0.5;
+            if (PosY <= 30)
+            {
+                OnTheSurface(this);
+            }
+
+            Energy -= 1;
+
+            if (Energy <= 0)
+            {
+                FishDie();
+            }
         }
     }
 
     class HerbFish : Entity
     {
+        public event FishDie DieEvent;
+        public event FishSteal OnTheSurface;
         public HerbFish(int posX, int posY, Bitmap[] sprite, World world, int width, int height, Random random) : base(posX, posY, sprite, world)
         {
             Type = "Herb";
@@ -454,7 +469,8 @@ namespace FishAquarium
                 ["Pred"] = 0.9,
                 ["Worm"] = 0.6,
                 ["Herb"] = 0,
-                ["Die"] = 0
+                ["Die"] = 0,
+                ["Stealed"] = 0
             };
         }
 
@@ -470,7 +486,18 @@ namespace FishAquarium
             }
         }
 
-        private protected override void ViewAnalys(List<Entity> sight)
+        protected override internal void Destroy()
+        {
+            world.fishHerbCount--;
+            world.fishCount--;
+            State = false;
+            Body = new Rectangle(-1, -1, 0, 0);
+            Sprite = null;
+            Head[0] = -1;
+            Head[1] = -1;
+        }
+
+        private protected void ViewAnalys(List<Entity> sight)
         {
             List<double> pref = new List<double>();
             bool isPred = false;
@@ -551,6 +578,10 @@ namespace FishAquarium
         {
             if (Type == "Die")
             {
+                if (PosY < 20)
+                {
+                    DieEvent(this);
+                }
                 Rectangle actRect = new Rectangle(PosX + Dx * Speed, PosY + Dy * Speed, Body.Width, Body.Height);
                 if (CheckBorders() && !world.CheckGroundColl(actRect))//CheckCollision(worldArr, obj).Count == 0 &&
                 {
@@ -567,8 +598,6 @@ namespace FishAquarium
             {
                 if (Body.Contains(Target[0], Target[1]))
                     GetTarget();
-                //if (obj.Target[0] == obj.Head[0] && obj.Target[1] == obj.Head[1])
-                //  GetTarget(obj);
             }
 
             FishEat(worldArr);
@@ -576,7 +605,17 @@ namespace FishAquarium
             PrepareFishMove(worldArr);
             TargetLimiter();
 
-            Energy -= 0.5;
+            if (PosY <= 30)
+            {
+                OnTheSurface(this);
+            }
+
+            Energy -= 1;
+
+            if (Energy <= 0)
+            {
+                FishDie();
+            }
         }
     }
 

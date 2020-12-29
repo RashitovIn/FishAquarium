@@ -31,8 +31,6 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.fieldPB = new System.Windows.Forms.PictureBox();
-            this.timer = new System.Windows.Forms.Timer(this.components);
             this.contBtn = new System.Windows.Forms.Button();
             this.countLb = new System.Windows.Forms.Label();
             this.TimerTrackBar = new System.Windows.Forms.TrackBar();
@@ -50,13 +48,15 @@
             this.label7 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.startBtn = new System.Windows.Forms.Button();
+            this.fieldPB = new System.Windows.Forms.PictureBox();
+            this.timer = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.fieldPB)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.TimerTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudTimer)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.fieldPB)).BeginInit();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -95,23 +95,6 @@
             this.splitContainer1.SplitterDistance = 197;
             this.splitContainer1.TabIndex = 1;
             // 
-            // fieldPB
-            // 
-            this.fieldPB.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("fieldPB.BackgroundImage")));
-            this.fieldPB.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.fieldPB.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.fieldPB.Location = new System.Drawing.Point(0, 0);
-            this.fieldPB.Name = "fieldPB";
-            this.fieldPB.Size = new System.Drawing.Size(1049, 625);
-            this.fieldPB.TabIndex = 0;
-            this.fieldPB.TabStop = false;
-            this.fieldPB.MouseDown += new System.Windows.Forms.MouseEventHandler(this.FieldPB_MouseMove);
-            this.fieldPB.MouseMove += new System.Windows.Forms.MouseEventHandler(this.FieldPB_MouseMove);
-            // 
-            // timer
-            // 
-            this.timer.Tick += new System.EventHandler(this.Timer_Tick);
-            // 
             // contBtn
             // 
             this.contBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
@@ -132,6 +115,7 @@
             this.countLb.TabIndex = 48;
             this.countLb.Text = "0";
             this.countLb.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.countLb.Visible = false;
             // 
             // TimerTrackBar
             // 
@@ -154,6 +138,7 @@
             this.label6.Size = new System.Drawing.Size(63, 13);
             this.label6.TabIndex = 47;
             this.label6.Text = "Всего рыб:";
+            this.label6.Visible = false;
             // 
             // label4
             // 
@@ -187,7 +172,6 @@
             0,
             0,
             0});
-            //this.nudTimer.ValueChanged += new System.EventHandler(this.nudTimer_ValueChanged);
             // 
             // label8
             // 
@@ -197,6 +181,7 @@
             this.label8.Size = new System.Drawing.Size(74, 13);
             this.label8.TabIndex = 50;
             this.label8.Text = "Хищных рыб:";
+            this.label8.Visible = false;
             // 
             // label3
             // 
@@ -226,6 +211,7 @@
             this.herbCountLb.TabIndex = 53;
             this.herbCountLb.Text = "0";
             this.herbCountLb.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.herbCountLb.Visible = false;
             // 
             // predCountLb
             // 
@@ -236,6 +222,7 @@
             this.predCountLb.TabIndex = 51;
             this.predCountLb.Text = "0";
             this.predCountLb.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.predCountLb.Visible = false;
             // 
             // label10
             // 
@@ -245,6 +232,7 @@
             this.label10.Size = new System.Drawing.Size(95, 13);
             this.label10.TabIndex = 52;
             this.label10.Text = "Травоядных рыб:";
+            this.label10.Visible = false;
             // 
             // ratioTB
             // 
@@ -297,6 +285,23 @@
             this.startBtn.UseVisualStyleBackColor = true;
             this.startBtn.Click += new System.EventHandler(this.startBtn_Click_1);
             // 
+            // fieldPB
+            // 
+            this.fieldPB.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("fieldPB.BackgroundImage")));
+            this.fieldPB.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.fieldPB.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.fieldPB.Location = new System.Drawing.Point(0, 0);
+            this.fieldPB.Name = "fieldPB";
+            this.fieldPB.Size = new System.Drawing.Size(1049, 625);
+            this.fieldPB.TabIndex = 0;
+            this.fieldPB.TabStop = false;
+            this.fieldPB.MouseDown += new System.Windows.Forms.MouseEventHandler(this.FieldPB_MouseMove);
+            this.fieldPB.MouseMove += new System.Windows.Forms.MouseEventHandler(this.FieldPB_MouseMove);
+            // 
+            // timer
+            // 
+            this.timer.Tick += new System.EventHandler(this.Timer_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -312,9 +317,9 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.fieldPB)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.TimerTrackBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudTimer)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.fieldPB)).EndInit();
             this.ResumeLayout(false);
 
         }
