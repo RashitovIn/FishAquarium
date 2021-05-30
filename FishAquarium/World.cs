@@ -167,25 +167,6 @@ namespace FishAquarium
                 fishHerbCount++;
                 i++;
             }
-
-            /*PredFish fish = new PredFish(100, 100, Bitmaps.GetRow(1), random);
-            worldArr.Add(fish);
-            HerbFish fishs = new HerbFish(200, 200, Bitmaps.GetRow(0), random);
-            worldArr.Add(fishs);
-            PredFish fishhh = new PredFish(300, 300, Bitmaps.GetRow(1), random);
-            worldArr.Add(fishhh);
-            HerbFish fishshh = new HerbFish(400, 400, Bitmaps.GetRow(0), random);
-            worldArr.Add(fishshh);*/
-        }
-
-        void Debug(Entity fish)
-        {
-            graphics.FillRectangle(Brushes.Red, fish.Target[0], fish.Target[1], 5, 5);
-            graphics.FillRectangle(Brushes.Yellow, fish.Head[0], fish.Head[1], 5, 5);
-            //graphics.DrawString(Convert.ToString(fish.Dx) + "  |  " + Convert.ToString(fish.ldx), new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
-            //graphics.DrawString(fish.dInfo, new Font("Arial", 14), Brushes.White, fish.PosX + (float)0.5, fish.PosY + (float)0.5);
-            Pen p = new Pen(Color.Green, 2);
-            graphics.DrawLine(p, (float)fish.Head[0], (float)fish.Head[1], (float)fish.Target[0], (float)fish.Target[1]);
         }
 
         public void Upgrade()
@@ -198,16 +179,12 @@ namespace FishAquarium
                     Color cr = Color.FromArgb(43, 21, 8);
                     SolidBrush sb = new SolidBrush(cr);
                     graphics.FillPath(sb, ground);
-                    graphics.FillRectangle(obj.Color, obj.Body);
+                    graphics.FillRectangle(Brushes.Transparent, obj.Body);
                     graphics.DrawImage(obj.Sprite, obj.Body);
                     graphics.DrawImage(cleaner.cleanerBitmap, cleaner.cleanerRect);
                     graphics.DrawImage(cat.catBitmap, cat.catRect);
 
-                    if (obj.Type != "Worm" && obj.Type != "Die") //&& obj != StealedFish)
-                    {
-                        //Debug(obj);
-                        graphics.DrawString(Convert.ToString(obj.Energy), drawFont, drawBrush, obj.PosX, obj.PosY);
-                    }
+                    graphics.DrawString(Convert.ToString(obj.Energy), drawFont, drawBrush, obj.PosX, obj.PosY);
 
                     obj.UpdateFish(ref worldArr);
                 }
@@ -232,35 +209,13 @@ namespace FishAquarium
 
         public void FeedingFish(int x, int y)
         {
-            var validationPassed = ValidateMousePosition(x, y, 'l');
+            var validationPassed = ValidateMousePosition(x, y);
             Worm worm = new Worm(x, y, Bitmaps.GetRow(3), this, 25, 25, random);
             if (validationPassed && !worm.CheckCollisionFromAllSides(worldArr))
                 worldArr.Add(worm);
         }
 
-        public void DeleteEntity(int x, int y)
-        {
-            var validationPassed = ValidateMousePosition(x, y);
-
-            if (validationPassed)
-            {
-                foreach (Entity fish in worldArr)
-                {
-                    if (fish.Body.Contains(x, y))
-                    {
-                        worldArr.Remove(fish);
-                        return;
-                    }
-                }
-            }
-        }
-
         bool ValidateMousePosition(int x, int y)
-        {
-            return x >= 0 && y >= 0 && x < Width && y < Height;
-        }
-
-        bool ValidateMousePosition(int x, int y, char l)
         {
             return x >= 0 && y >= 0 && x < Width - 50 && y < Height - 50;
         }

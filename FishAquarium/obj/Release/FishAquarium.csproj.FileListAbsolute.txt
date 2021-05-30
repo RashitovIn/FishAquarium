@@ -1,0 +1,10 @@
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\bin\Release\FishAquarium.exe.config
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\bin\Release\FishAquarium.exe
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\bin\Release\FishAquarium.pdb
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\obj\Release\FishAquarium.csprojAssemblyReference.cache
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\obj\Release\FishAquarium.Form1.resources
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\obj\Release\FishAquarium.Properties.Resources.resources
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\obj\Release\FishAquarium.csproj.GenerateResource.cache
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\obj\Release\FishAquarium.csproj.CoreCompileInputs.cache
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\obj\Release\FishAquarium.exe
+C:\Users\79639\source\repos\FishAquarium\FishAquarium\obj\Release\FishAquarium.pdb

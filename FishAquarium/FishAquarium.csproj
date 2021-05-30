@@ -54,6 +54,7 @@
     <Compile Include="Component1.Designer.cs">
       <DependentUpon>Component1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Entity.cs" />
     <Compile Include="Fish.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>

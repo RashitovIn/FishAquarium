@@ -11,9 +11,6 @@ namespace FishAquarium
         World world;
         int currentGen = 0;
 
-        public Font drawFont = new Font("Arial", 10);
-        public SolidBrush drawBrush = new SolidBrush(Color.White);
-
         public Form1()
         {
             InitializeComponent();
@@ -88,13 +85,6 @@ namespace FishAquarium
                 var x = e.Location.X;
                 var y = e.Location.Y;
                 world.FeedingFish(x, y);
-            }
-
-            if (e.Button == MouseButtons.Right)
-            {
-                var x = e.Location.X;
-                var y = e.Location.Y;
-                world.DeleteEntity(x, y);
             }
         }
     }
